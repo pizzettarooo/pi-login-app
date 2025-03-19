@@ -1,48 +1,39 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
-import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY!;
-const WALLET_DESTINATARIO = "TUO_WALLET_PI"; // Cambia con il wallet del sito
-const EXPECTED_AMOUNT = "1.0000000";
-const SERVER_URL = "https://api.testnet.minepi.com";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const STELLAR_API = "https://api.mainnet.minepi.com/accounts/";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Metodo non consentito" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ success: false, error: "Metodo non consentito" });
+  }
 
   const { wallet } = req.body;
-  if (!wallet) return res.status(400).json({ error: "Wallet non fornito" });
+
+  if (!wallet) {
+    return res.status(400).json({ success: false, error: "Wallet richiesto" });
+  }
 
   try {
-    const response = await axios.get(`${SERVER_URL}/accounts/${WALLET_DESTINATARIO}/transactions?order=desc&limit=10`);
-    const transactions = response.data._embedded.records;
+    // 🔍 Ottiene la lista delle transazioni del wallet
+    const response = await axios.get(`${STELLAR_API}${wallet}/transactions`);
+    const transactions = response.data?._embedded?.records || [];
 
     for (const tx of transactions) {
-      if (tx.successful && tx.operation_count === 1) {
-        const operationsResponse = await axios.get(`${SERVER_URL}/transactions/${tx.hash}/operations`);
-        const operations = operationsResponse.data._embedded.records;
+      // 🔍 Prende i dettagli della transazione
+      const txDetails = await axios.get(tx._links.operations.href);
+      const operations = txDetails.data?._embedded?.records || [];
 
-        for (const op of operations) {
-          if (op.type === "payment" && op.to === WALLET_DESTINATARIO && op.amount === EXPECTED_AMOUNT && op.from === wallet) {
-            // Aggiorna crediti utente
-            const { data, error } = await supabase.from("users").select("credits").eq("wallet", wallet).single();
-
-            if (!error && data) {
-              const newCredits = data.credits + 1;
-              await supabase.from("users").update({ credits: newCredits }).eq("wallet", wallet);
-              return res.json({ success: true, message: "Pagamento confermato!" });
-            }
-          }
+      for (const op of operations) {
+        if (op.type === "payment" && op.to === wallet && parseFloat(op.amount) > 0) {
+          return res.status(200).json({ success: true, transaction: op });
         }
       }
     }
 
-    return res.json({ success: false, message: "Pagamento non trovato." });
+    return res.status(200).json({ success: false, message: "Nessuna transazione trovata" });
   } catch (error) {
-    console.error("Errore nel controllo delle transazioni:", error);
-    return res.status(500).json({ error: "Errore nel server" });
+    console.error("Errore nel controllo transazioni:", error);
+    return res.status(500).json({ success: false, error: "Errore nel recupero delle transazioni" });
   }
 }
