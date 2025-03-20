@@ -19,13 +19,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const response = await axios.get(`${STELLAR_API}${wallet}/transactions`);
     const transactions = response.data?._embedded?.records || [];
 
-    // 🔎 Trova una transazione valida con l'importo giusto
-    const validTransaction = transactions.find((tx: any) => {
-      return tx.source_account !== wallet && parseFloat(tx.amount) === amount;
-    });
+    let foundTransaction = null;
 
-    if (validTransaction) {
-      return res.status(200).json({ success: true, transaction: validTransaction });
+    for (const tx of transactions) {
+      // 🔍 Recupera le operazioni della transazione
+      const operationsResponse = await axios.get(tx._links.operations.href);
+      const operations = operationsResponse.data?._embedded?.records || [];
+
+      // 🔎 Controlla se una delle operazioni ha il wallet come destinatario e l'importo corretto
+      const validOperation = operations.find(
+        (op: any) => op.to === wallet && parseFloat(op.amount) === amount
+      );
+
+      if (validOperation) {
+        foundTransaction = tx;
+        break;
+      }
+    }
+
+    if (foundTransaction) {
+      return res.status(200).json({ success: true, transaction: foundTransaction });
     } else {
       return res.status(200).json({ success: false, message: "Nessuna transazione con importo corretto trovata" });
     }
