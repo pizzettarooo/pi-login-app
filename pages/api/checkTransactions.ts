@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 
-const STELLAR_API = "https://api.mainnet.minepi.com/accounts/";
+const STELLAR_API = "https://api.testnet.minepi.com/accounts/";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
-    return res.status(405).json({ success: false, error: "Metodo non consentito" });
+    return res.status(405).json({ success: false, error: "Method Not Allowed" });
   }
 
   const { wallet } = req.body;
@@ -15,38 +15,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    console.log(`🔍 Controllo transazioni per il wallet: ${wallet}`);
-
-    // 🔍 Ottiene la lista delle transazioni del wallet
+    // 🔍 Ottiene la lista delle transazioni dal wallet
     const response = await axios.get(`${STELLAR_API}${wallet}/transactions`);
-    console.log(`✅ API risposta ricevuta:`, response.data);
-
     const transactions = response.data?._embedded?.records || [];
 
-    for (const tx of transactions) {
-      console.log(`🔍 Analizzando transazione: ${tx.id}`);
+    // 🔎 Controlla se ci sono transazioni ricevute dal wallet
+    const receivedTransactions = transactions.filter((tx: any) => {
+      return tx.source_account !== wallet; // Esclude le transazioni inviate dal wallet stesso
+    });
 
-      // 🔍 Prende i dettagli della transazione
-      const txDetails = await axios.get(tx._links.operations.href);
-      console.log(`📄 Dettagli transazione:`, txDetails.data);
-
-      const operations = txDetails.data?._embedded?.records || [];
-
-      for (const op of operations) {
-        console.log(`➡️ Operazione trovata:`, op);
-
-        if (op.type === "payment" && op.to === wallet && parseFloat(op.amount) > 0) {
-          console.log(`✅ Transazione valida trovata:`, op);
-          return res.status(200).json({ success: true, transaction: op });
-        }
-      }
+    if (receivedTransactions.length > 0) {
+      return res.status(200).json({ success: true, transactions: receivedTransactions });
+    } else {
+      return res.status(200).json({ success: false, message: "Nessuna transazione in entrata trovata" });
     }
-
-    console.log("❌ Nessuna transazione trovata.");
-    return res.status(200).json({ success: false, message: "Nessuna transazione trovata" });
-
   } catch (error) {
-    console.error("🚨 Errore nel recupero delle transazioni:", error);
-    return res.status(500).json({ success: false, error: `Errore: ${error.message}` });
+    console.error("Errore nel controllo transazioni:", error);
+    return res.status(500).json({ success: false, error: "Errore nel recupero delle transazioni" });
   }
 }
