@@ -3,8 +3,14 @@ import Replicate from 'replicate'
 import { createClient } from '@supabase/supabase-js'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
-const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! })
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+)
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN!
+})
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log("📥 /api/chat chiamata con metodo:", req.method)
@@ -36,16 +42,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // 2. Chiamata a Replicate
+    // 2. Chiamata corretta a Replicate
     const output = await replicate.run(
       'antoinelyset/openhermes-2-mistral-7b-awq',
       {
         input: {
-          prompt: `Sei una ragazza italiana molto seducente. Rispondi in modo coinvolgente ed erotico a questo messaggio dell'utente:\n"${message}"`,
-          temperature: 0.7,
-          max_new_tokens: 150,
+          prompt: `[{"role": "user", "content": "${message}"}]`,
+          temperature: 0.75,
           top_p: 0.9,
-          repetition_penalty: 1.2
+          top_k: 50,
+          max_new_tokens: 150,
+          use_beam_search: false
         }
       }
     )
@@ -61,6 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // 4. Risposta finale
     return res.status(200).json({ reply })
+
   } catch (err: any) {
     console.error("❌ Errore Replicate:", err)
     return res.status(500).json({ error: 'Errore durante la risposta AI' })
