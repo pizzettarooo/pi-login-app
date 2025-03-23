@@ -42,15 +42,25 @@ export default function Dashboard() {
       <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
       {wallet ? (
         <>
-          <p className="text-xl text-center">
+          <p className="text-xl text-center mb-4">
             Wallet: <strong>{wallet}</strong><br />
             Crediti disponibili: <strong>{credits}</strong> Pi 💰
           </p>
+
+          {/* Bottone Ricarica */}
           <button
-            className="mt-6 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mb-3 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             onClick={() => router.push("/ricarica")}
           >
             Ricarica crediti
+          </button>
+
+          {/* ✅ Bottone Chat AI */}
+          <button
+            className="px-6 py-2 bg-pink-600 text-white rounded hover:bg-pink-700"
+            onClick={() => router.push("/chat")}
+          >
+            💋 Chatta con Giulia (1 Pi / messaggio)
           </button>
         </>
       ) : (
