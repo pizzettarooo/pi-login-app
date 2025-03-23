@@ -1,10 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
+// @ts-ignore
 import Replicate from 'replicate'
+import { createClient } from '@supabase/supabase-js'
+import type { NextApiRequest, NextApiResponse } from 'next'
 
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! })
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
 
   const { wallet, message } = req.body
