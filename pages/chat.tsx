@@ -1,32 +1,42 @@
-import { useState } from 'react'
-import axios from 'axios'
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<{ from: 'user' | 'ai', text: string }[]>([])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [wallet, setWallet] = useState("");
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<{ from: 'user' | 'ai', text: string }[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const wallet = 'INSERISCI_IL_WALLET_ATTIVO' // Da sostituire dinamicamente con il wallet dell’utente loggato
+  useEffect(() => {
+    const savedWallet = localStorage.getItem("wallet");
+    if (savedWallet) {
+      setWallet(savedWallet);
+    }
+  }, []);
 
   const sendMessage = async () => {
-    if (!input.trim()) return
-    setLoading(true)
-    setMessages(prev => [...prev, { from: 'user', text: input }])
+    if (!input.trim()) return;
+
+    setLoading(true);
+    setMessages(prev => [...prev, { from: "user", text: input }]);
 
     try {
-      const response = await axios.post('/api/chat', {
+      const res = await axios.post("/api/chat", {
         wallet,
         message: input
-      })
+      });
 
-      const aiReply = response.data.reply
-      setMessages(prev => [...prev, { from: 'user', text: input }, { from: 'ai', text: aiReply }])
-    } catch (error: any) {
-      setMessages(prev => [...prev, { from: 'ai', text: 'Errore: ' + (error?.response?.data?.error || 'Impossibile rispondere') }])
+      setMessages(prev => [...prev, { from: "ai", text: res.data.reply }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { from: "ai", text: "Errore nella risposta." }]);
     }
 
-    setInput('')
-    setLoading(false)
+    setInput("");
+    setLoading(false);
+  };
+
+  if (!wallet) {
+    return <p>⚠️ Devi fare login per usare la chat.</p>;
   }
 
   return (
@@ -35,8 +45,8 @@ export default function ChatPage() {
 
       <div className="bg-gray-100 p-4 rounded-lg h-[400px] overflow-y-scroll space-y-2">
         {messages.map((msg, i) => (
-          <div key={i} className={msg.from === 'user' ? 'text-right' : 'text-left'}>
-            <span className={msg.from === 'user' ? 'text-blue-600' : 'text-pink-600'}>
+          <div key={i} className={msg.from === "user" ? "text-right" : "text-left"}>
+            <span className={msg.from === "user" ? "text-blue-600" : "text-pink-600"}>
               {msg.text}
             </span>
           </div>
@@ -49,7 +59,7 @@ export default function ChatPage() {
           className="flex-1 border rounded-lg p-2"
           placeholder="Scrivi un messaggio..."
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           disabled={loading}
         />
         <button
@@ -63,5 +73,5 @@ export default function ChatPage() {
 
       {loading && <p className="text-sm text-gray-500">Giulia sta scrivendo...</p>}
     </div>
-  )
+  );
 }
