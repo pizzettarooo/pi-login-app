@@ -7,21 +7,62 @@ const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_AN
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! })
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log("📥 API /chat chiamata con metodo:", req.method)
+  console.log("📥 /api/chat chiamata con metodo:", req.method)
 
   if (req.method !== 'POST') {
     console.warn("🚫 Metodo non permesso:", req.method)
     return res.status(405).end()
   }
 
-  try {
-    const { wallet, message } = req.body
-    console.log("📩 Messaggio ricevuto:", message)
-    console.log("👛 Wallet:", wallet)
+  const { wallet, message } = req.body
+  console.log("👛 Wallet:", wallet)
+  console.log("💬 Messaggio:", message)
 
-    res.status(200).json({ reply: "Funziona! Risposta test da API ✅" })
-  } catch (error: any) {
-    console.error("❌ Errore generico nella API /chat:", error)
-    res.status(500).json({ error: 'Errore interno server' })
+  // 1. Controllo crediti utente
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('id, credits')
+    .eq('wallet', wallet)
+    .single()
+
+  if (error) {
+    console.error("❌ Errore Supabase:", error)
+    return res.status(500).json({ error: 'Errore nel recupero utente' })
+  }
+
+  if (!user || user.credits < 1) {
+    console.warn("🚫 Crediti insufficienti")
+    return res.status(403).json({ error: 'Crediti insufficienti' })
+  }
+
+  try {
+    // 2. Chiamata a Replicate
+    const output = await replicate.run(
+      'antoinelyset/openhermes-2-mistral-7b-awq',
+      {
+        input: {
+          prompt: `Sei una ragazza italiana molto seducente. Rispondi in modo coinvolgente ed erotico a questo messaggio dell'utente:\n"${message}"`,
+          temperature: 0.7,
+          max_new_tokens: 150,
+          top_p: 0.9,
+          repetition_penalty: 1.2
+        }
+      }
+    )
+
+    const reply = Array.isArray(output) ? output.join('') : output
+    console.log("🤖 Risposta AI:", reply)
+
+    // 3. Scala 1 credito
+    await supabase
+      .from('users')
+      .update({ credits: user.credits - 1 })
+      .eq('wallet', wallet)
+
+    // 4. Risposta finale
+    return res.status(200).json({ reply })
+  } catch (err: any) {
+    console.error("❌ Errore Replicate:", err)
+    return res.status(500).json({ error: 'Errore durante la risposta AI' })
   }
 }
