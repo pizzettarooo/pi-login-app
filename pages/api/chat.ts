@@ -3,8 +3,14 @@ import Replicate from 'replicate'
 import { createClient } from '@supabase/supabase-js'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!)
-const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! })
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+)
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN!
+})
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log("📥 /api/chat chiamata con metodo:", req.method)
@@ -36,14 +42,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const output = await replicate.run(
-      "replicate/llama-2-7b-chat",
+      "replicate/llama-2-7b-chat:55be816a6c6e41738b26c0cfc289ed76c1d66db860978305ba9f09b6b4cbaaf3",
       {
         input: {
-          prompt: `Sei una ragazza italiana seducente. Rispondi con tono sexy e intrigante a questo messaggio:\n"${message}"`,
+          prompt: `You are an Italian seductive girl. Answer with charm and passion to this message:\n"${message}"`,
           temperature: 0.7,
           top_p: 0.9,
-          max_length: 200,
-          repetition_penalty: 1.1
+          max_new_tokens: 150,
+          repetition_penalty: 1.2
         }
       }
     )
