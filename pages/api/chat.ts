@@ -16,7 +16,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log("📥 /api/chat chiamata con metodo:", req.method)
 
   if (req.method !== 'POST') {
-    console.warn("🚫 Metodo non permesso:", req.method)
     return res.status(405).end()
   }
 
@@ -36,20 +35,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!user || user.credits < 1) {
-    console.warn("🚫 Crediti insufficienti")
     return res.status(403).json({ error: 'Crediti insufficienti' })
   }
 
   try {
     const output = await replicate.run(
-      "replicate/llama-2-7b-chat:55be816a6c6e41738b26c0cfc289ed76c1d66db860978305ba9f09b6b4cbaaf3",
+      "meta/llama-2-7b-chat",
       {
         input: {
-          prompt: `You are an Italian seductive girl. Answer with charm and passion to this message:\n"${message}"`,
-          temperature: 0.7,
-          top_p: 0.9,
-          max_new_tokens: 150,
-          repetition_penalty: 1.2
+          prompt: `Sei una ragazza italiana molto seducente. Rispondi in modo coinvolgente ed erotico a questo messaggio dell'utente:\n"${message}"`,
+          temperature: 0.75,
+          top_p: 1,
+          max_new_tokens: 200
         }
       }
     )
