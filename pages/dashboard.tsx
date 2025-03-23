@@ -8,8 +8,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     const savedWallet = localStorage.getItem("wallet");
-
     if (savedWallet) {
+      console.log("💾 Wallet:", savedWallet);
       setWallet(savedWallet);
       fetchCredits(savedWallet);
     } else {
@@ -29,11 +29,10 @@ export default function Dashboard() {
       if (data.success) {
         setCredits(data.credits);
       } else {
-        console.warn("❌ Crediti non trovati.");
         setCredits(0);
       }
     } catch (err) {
-      console.error("❌ Errore durante il recupero crediti:", err);
+      console.error("Errore nel recupero crediti:", err);
     }
   }
 
@@ -47,7 +46,6 @@ export default function Dashboard() {
             Crediti disponibili: <strong>{credits}</strong> Pi 💰
           </p>
 
-          {/* Bottone Ricarica */}
           <button
             className="mb-3 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             onClick={() => router.push("/ricarica")}
@@ -55,7 +53,7 @@ export default function Dashboard() {
             Ricarica crediti
           </button>
 
-          {/* ✅ Bottone Chat AI */}
+          {/* ✅ Bottone chat AI */}
           <button
             className="px-6 py-2 bg-pink-600 text-white rounded hover:bg-pink-700"
             onClick={() => router.push("/chat")}
