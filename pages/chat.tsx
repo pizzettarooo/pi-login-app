@@ -8,7 +8,7 @@ export default function Chat() {
   const handleSend = async () => {
     if (!input) return;
 
-    const res = await fetch('https://ecaa-62-19-242-117.ngrok-free.app/api/generate', {
+    const res = await fetch('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
