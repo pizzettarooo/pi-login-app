@@ -1,77 +1,112 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
-export default function ChatPage() {
-  const [wallet, setWallet] = useState("");
+export default function Chat() {
+  const [wallet, setWallet] = useState<string | null>(null);
+  const [credits, setCredits] = useState<number>(0);
+  const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<{ from: 'user' | 'ai', text: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const savedWallet = localStorage.getItem("wallet");
     if (savedWallet) {
       setWallet(savedWallet);
+      fetchCredits(savedWallet);
+    } else {
+      alert("⚠️ Wallet non trovato. Fai login prima.");
+      router.push("/");
     }
   }, []);
 
-  const sendMessage = async () => {
+  async function fetchCredits(wallet: string) {
+    const res = await fetch("/api/getCredits", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wallet }),
+    });
+    const data = await res.json();
+    if (data.success) setCredits(data.credits);
+  }
+
+  async function handleSendMessage() {
     if (!input.trim()) return;
+    if (!wallet) return;
 
-    setLoading(true);
-    setMessages(prev => [...prev, { from: "user", text: input }]);
-
-    try {
-      const res = await axios.post("/api/chat", {
-        wallet,
-        message: input
-      });
-
-      setMessages(prev => [...prev, { from: "ai", text: res.data.reply }]);
-    } catch (err: any) {
-      setMessages(prev => [...prev, { from: "ai", text: "Errore nella risposta." }]);
+    if (credits <= 0) {
+      alert("❌ Crediti insufficienti. Ricarica prima di continuare.");
+      return;
     }
 
+    const userMessage = input.trim();
+    setMessages([...messages, { from: "user", text: userMessage }]);
     setInput("");
-    setLoading(false);
-  };
+    setLoading(true);
 
-  if (!wallet) {
-    return <p>⚠️ Devi fare login per usare la chat.</p>;
+    try {
+      const res = await fetch("https://replicate-ai-production.up.railway.app/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: userMessage }),
+      });
+
+      const data = await res.json();
+      const aiResponse = data.output || "Errore nella risposta AI.";
+
+      setMessages((prev) => [...prev, { from: "ai", text: aiResponse }]);
+
+      // 🔻 Scala 1 credito dopo la risposta
+      await fetch("/api/updateCredits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet, amount: -1 }),
+      });
+
+      // 🔄 Aggiorna crediti mostrati
+      fetchCredits(wallet);
+    } catch (err) {
+      console.error("Errore AI:", err);
+      alert("❌ Errore nel contattare l'AI.");
+    }
+
+    setLoading(false);
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <h1 className="text-2xl font-bold mb-4">Chatta con Giulia 💋</h1>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-2xl font-bold mb-4">💬 Chatta con Giulia</h1>
+      <p className="mb-2">Crediti disponibili: <strong>{credits}</strong> Pi 💰</p>
 
-      <div className="bg-gray-100 p-4 rounded-lg h-[400px] overflow-y-scroll space-y-2">
-        {messages.map((msg, i) => (
-          <div key={i} className={msg.from === "user" ? "text-right" : "text-left"}>
-            <span className={msg.from === "user" ? "text-blue-600" : "text-pink-600"}>
-              {msg.text}
-            </span>
+      <div className="bg-white p-4 rounded shadow mb-4 h-96 overflow-y-scroll">
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`mb-2 p-2 rounded ${
+              msg.from === "user" ? "bg-blue-100 text-right" : "bg-pink-100 text-left"
+            }`}
+          >
+            {msg.text}
           </div>
         ))}
       </div>
 
       <div className="flex gap-2">
         <input
-          type="text"
-          className="flex-1 border rounded-lg p-2"
-          placeholder="Scrivi un messaggio..."
+          className="flex-1 p-2 border rounded"
+          placeholder="Scrivi qui..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
         />
         <button
-          onClick={sendMessage}
+          className="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700"
+          onClick={handleSendMessage}
           disabled={loading}
-          className="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600"
         >
           Invia
         </button>
       </div>
-
-      {loading && <p className="text-sm text-gray-500">Giulia sta scrivendo...</p>}
     </div>
   );
 }
