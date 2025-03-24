@@ -19,9 +19,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       body: JSON.stringify(req.body),
     });
 
-    const data = await response.json();
+    // Se la risposta non è ok (es: 500, 403, etc), la leggiamo come testo
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Risposta non valida da Ollama:', errorText);
+      return res.status(500).json({ error: 'Risposta non valida da Ollama' });
+    }
 
-    console.log('✅ Risposta da Ollama:', data); // per debug
+    const data = await response.json();
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     return res.status(200).json({ response: data.response });
