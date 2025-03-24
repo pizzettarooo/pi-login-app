@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const response = await fetch('http://localhost:11434/api/generate', {
+    const response = await fetch('https://3930-62-19-242-117.ngrok-free.app/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req.body),
@@ -21,12 +21,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const data = await response.json();
 
-    console.log('✅ Risposta da Ollama:', data); // 👈 log per debug
+    console.log('✅ Risposta da Ollama:', data); // per debug
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.status(200).json(data);
+    return res.status(200).json({ response: data.response });
   } catch (error) {
     console.error('❌ Errore:', error);
-    return res.status(500).json({ error: 'Errore nella richiesta a Ollama' });
+    return res.status(500).json({ error: 'Errore nella richiesta a Ollama (ngrok)' });
   }
 }
