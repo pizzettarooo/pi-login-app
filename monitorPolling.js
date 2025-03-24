@@ -1,101 +1,74 @@
-import fetch from 'node-fetch';
-import { createClient } from '@supabase/supabase-js';
+// monitorPolling.ts
+import { createClient } from '@supabase/supabase-js'
+import axios from 'axios'
 
-const SUPABASE_URL = 'https://lytlsiqllcbyqziveqca.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dGxzaXFsbGNieXF6aXZlcWNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIxOTU1NTksImV4cCI6MjA1Nzc3MTU1OX0.P4mWU1dXtt82lk0bHc6I9cURfK3c6rl09RF2miqSglA'; // usa la tua chiave completa
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL = process.env.SUPABASE_URL!
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE!
+const STELLAR_WALLET = process.env.SITE_WALLET!
 
-const WALLET_ADDRESS = 'GCMEELHBN6VBVFGVRRD7PAGJZY63F3PWA4CL6QGXCYNMFPFL6J77B2RV';
-const STELLAR_API = `https://api.testnet.minepi.com/accounts/${WALLET_ADDRESS}/transactions`;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-let lastCursor = null; // qui memorizziamo l'ultimo paging_token
+async function main() {
+  console.log("🚀 Monitor polling avviato")
 
-async function fetchTransactions() {
-  try {
-    const url = lastCursor
-      ? `${STELLAR_API}?cursor=${lastCursor}&order=asc`
-      : `${STELLAR_API}?order=asc`;
+  // 1. Recupera ultimo timestamp salvato
+  const { data: state } = await supabase
+    .from('monitor_state')
+    .select('last_checked_timestamp')
+    .eq('id', 1)
+    .single()
 
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Errore nella richiesta API Stellar');
+  const lastTimestamp = state?.last_checked_timestamp || '1970-01-01T00:00:00Z'
+  console.log("🕓 Ultimo timestamp elaborato:", lastTimestamp)
 
-    const data = await response.json();
-    return data._embedded?.records || [];
-  } catch (error) {
-    console.error('❌ Errore nel recupero delle transazioni:', error.message);
-    return [];
-  }
-}
+  // 2. Ottieni transazioni recenti da Horizon
+  const url = `https://api.stellar.expert/explorer/public/account/${STELLAR_WALLET}/payments?limit=100&order=desc`
+  const res = await axios.get(url)
+  const allTransactions = res.data._embedded.records
 
-async function processTransactions() {
-  console.log('🔍 Controllo nuove transazioni...');
-  const transactions = await fetchTransactions();
+  let newTxns = 0
 
-  for (const tx of transactions) {
-    const { id, created_at, source_account, paging_token } = tx;
+  for (const tx of allTransactions) {
+    if (tx.created_at <= lastTimestamp) continue // Già elaborata
+    if (tx.to !== STELLAR_WALLET || tx.asset_type !== 'native') continue // Solo transazioni in Pi
 
-    // Aggiorna il cursore per evitare duplicati in futuro
-    lastCursor = paging_token;
+    const senderWallet = tx.from
+    const amount = parseFloat(tx.amount)
 
-    const { data: existingTx } = await supabase
-      .from('transactions')
-      .select('id')
-      .eq('id', id)
-      .single();
-
-    if (existingTx) {
-      console.log(`🔹 Transazione ${id} già registrata. Ignorata.`);
-      continue;
-    }
-
-    const operationURL = tx._links.operations.href.replace('{?cursor,limit,order}', '');
-    const opRes = await fetch(operationURL);
-    const opData = await opRes.json();
-    const operation = opData._embedded?.records?.[0];
-
-    if (!operation || operation.type !== 'payment' || operation.to !== WALLET_ADDRESS) {
-      console.log(`⏭️ Transazione ${id} non è un pagamento in entrata. Ignorata.`);
-      continue;
-    }
-
-    const amount = parseFloat(operation.amount);
-
-    const { data: user, error: userError } = await supabase
+    // Cerca l'utente in Supabase
+    const { data: user } = await supabase
       .from('users')
       .select('id, credits')
-      .eq('wallet', source_account)
-      .single();
+      .eq('wallet', senderWallet)
+      .single()
 
     if (!user) {
-      console.log(`⚠️ Mittente ${source_account} non trovato nel database.`);
-      if (userError) console.error('❌ Errore Supabase:', userError.message);
-      continue;
+      console.log(`⚠️ Wallet non registrato: ${senderWallet}`)
+      continue
     }
 
-    const updatedCredits = user.credits + Math.floor(amount);
-
-    const { error: updateError } = await supabase
+    // 3. Aggiungi crediti all'utente
+    await supabase
       .from('users')
-      .update({ credits: updatedCredits })
-      .eq('id', user.id);
+      .update({ credits: user.credits + amount })
+      .eq('id', user.id)
 
-    if (updateError) {
-      console.error(`❌ Errore aggiornamento crediti per ${source_account}:`, updateError);
-      continue;
-    }
-
-    const { error: insertError } = await supabase
+    // 4. Salva transazione
+    await supabase
       .from('transactions')
-      .insert([{ id, user_id: user.id, amount, type: 'payment', created_at }]);
+      .insert({ id: tx.id, user_id: user.id, amount, type: 'deposit' })
 
-    if (insertError) {
-      console.error(`❌ Errore salvataggio transazione ${id}:`, insertError);
-      continue;
-    }
-
-    console.log(`✅ Transazione ${id} registrata. Importo: ${amount} Pi. Crediti aggiornati a ${updatedCredits}.`);
+    console.log(`💰 Accreditati ${amount} Pi a ${senderWallet}`)
+    newTxns++
   }
+
+  // 5. Aggiorna timestamp
+  const newTimestamp = allTransactions[0]?.created_at || lastTimestamp
+  await supabase
+    .from('monitor_state')
+    .upsert({ id: 1, last_checked_timestamp: newTimestamp }, { onConflict: 'id' })
+
+  console.log(`✅ ${newTxns} nuove transazioni elaborate.`)
 }
 
-setInterval(processTransactions, 30000);
-console.log('🔍 Monitoraggio transazioni avviato...');
+main().catch(err => console.error("❌ Errore monitorPolling:", err))
