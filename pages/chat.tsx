@@ -6,17 +6,25 @@ export default function Chat() {
   const [input, setInput] = useState('');
 
   const handleSend = async () => {
+    console.log("Click su INVIA"); // ✅ DEBUG
+
     if (!input) return;
 
-    const res = await fetch('https://loveonpi.com/ask-francesca', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: input }),
-    });
+    try {
+      const res = await fetch('https://loveonpi.com/ask-francesca', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input }),
+      });
 
-    const data = await res.json();
-    setMessages([...messages, `👤 ${input}`, `🤖 ${data.response}`]);
-    setInput('');
+      const data = await res.json();
+      console.log("Risposta Francesca:", data); // ✅ DEBUG
+
+      setMessages([...messages, `👤 ${input}`, `🤖 ${data.response}`]);
+      setInput('');
+    } catch (error) {
+      console.error("Errore nella richiesta:", error);
+    }
   };
 
   return (
