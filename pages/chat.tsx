@@ -14,7 +14,6 @@ export default function Chat() {
     setInput("");
 
     try {
-      // 🔄 Chiamata all'AI su llama-server tramite NGINX
       const res = await fetch("https://loveonpi.com/api/francesca/completion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -27,12 +26,12 @@ export default function Chat() {
       const data = await res.json();
 
       if (data?.content) {
-        setMessages((prev) => [...prev, `💋 Francesca: ${data.content.trim()}`]);
+        setMessages((prev) => [
+          ...prev,
+          `💋 Francesca: ${data.content.trim()}`
+        ]);
 
-        // 🔁 Scala 1 credito se tutto è andato bene
-        await fetch("/api/updateCredits", {
-          method: "POST",
-        });
+        await fetch("/api/updateCredits", { method: "POST" });
       } else {
         setMessages((prev) => [...prev, "⚠️ Nessuna risposta ricevuta"]);
       }
