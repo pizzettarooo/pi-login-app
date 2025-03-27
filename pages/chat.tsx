@@ -1,52 +1,70 @@
-'use client';
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function Chat() {
   const [messages, setMessages] = useState<string[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSend = async () => {
-    console.log("Click su INVIA"); // ✅ DEBUG
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+    setLoading(true);
 
-    if (!input) return;
+    const userMessage = input.trim();
+    setMessages((prev) => [...prev, `👨‍💻: ${userMessage}`]);
+    setInput("");
 
     try {
-      const res = await fetch('https://loveonpi.com/ask-francesca', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input }),
+      // 🔄 Chiamata all'AI su llama-server tramite NGINX
+      const res = await fetch("https://loveonpi.com/api/francesca/completion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: userMessage,
+          n_predict: 100,
+        }),
       });
 
       const data = await res.json();
-      console.log("Risposta Francesca:", data); // ✅ DEBUG
 
-      setMessages([...messages, `👤 ${input}`, `🤖 ${data.response}`]);
-      setInput('');
-    } catch (error) {
-      console.error("Errore nella richiesta:", error);
+      if (data?.content) {
+        setMessages((prev) => [...prev, `💋 Francesca: ${data.content.trim()}`]);
+
+        // 🔁 Scala 1 credito se tutto è andato bene
+        await fetch("/api/updateCredits", {
+          method: "POST",
+        });
+      } else {
+        setMessages((prev) => [...prev, "⚠️ Nessuna risposta ricevuta"]);
+      }
+    } catch (err) {
+      setMessages((prev) => [...prev, "❌ Errore durante la richiesta"]);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <main className="p-4">
-      <h1 className="text-xl font-bold mb-4">Chat con Francesca 💋</h1>
-      <div className="space-y-2 mb-4">
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+      <h1>Chat con Francesca 💋</h1>
+
+      <div style={{ marginBottom: "10px" }}>
+        <input
+          type="text"
+          value={input}
+          placeholder="Scrivi qui..."
+          onChange={(e) => setInput(e.target.value)}
+          disabled={loading}
+        />
+        <button onClick={sendMessage} disabled={loading || !input.trim()}>
+          {loading ? "..." : "Invia"}
+        </button>
+      </div>
+
+      <div style={{ whiteSpace: "pre-wrap" }}>
         {messages.map((msg, i) => (
-          <div key={i} className="bg-gray-200 p-2 rounded">{msg}</div>
+          <p key={i}>{msg}</p>
         ))}
       </div>
-      <input
-        className="border p-2 rounded w-full"
-        placeholder="Scrivile qualcosa..."
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-      <button
-        onClick={handleSend}
-        className="mt-2 bg-pink-500 text-white px-4 py-2 rounded"
-      >
-        Invia
-      </button>
-    </main>
+    </div>
   );
 }
