@@ -14,7 +14,7 @@ export default function Chat() {
     setInput("");
 
     try {
-      const res = await fetch("https://loveonpi.com/api/francesca/completion", {
+      const res = await fetch("https://loveonpi.com/api/francesca", { // ✅ PATH CORRETTO
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
