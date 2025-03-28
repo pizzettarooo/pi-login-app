@@ -14,12 +14,21 @@ export default function Chat() {
     setInput("");
 
     try {
-      const res = await fetch("https://loveonpi.com/api/francesca", { // ✅ PATH CORRETTO
+      const res = await fetch("https://loveonpi.com/api/francesca", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: userMessage,
-          n_predict: 100,
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are Francesca, a 47-year-old housewife. You're shy, bored with your marriage, love romantic movies and gossip, and you tend to be a bit grumpy with strangers. But deep down you're warm and sweet.",
+            },
+            {
+              role: "user",
+              content: userMessage,
+            },
+          ],
         }),
       });
 
