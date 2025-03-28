@@ -10,7 +10,7 @@ export default function Chat() {
     setLoading(true);
 
     const userMessage = input.trim();
-    setMessages((prev) => [...prev, `👩🏻‍💻: ${userMessage}`]);
+    setMessages((prev) => [...prev, `🙋‍♀️: ${userMessage}`]);
     setInput("");
 
     try {
@@ -30,6 +30,7 @@ export default function Chat() {
           ...prev,
           `💋 Francesca: ${data.content.trim()}`
         ]);
+
         await fetch("/api/updateCredits", { method: "POST" });
       } else {
         setMessages((prev) => [...prev, "⚠️ Nessuna risposta ricevuta"]);
@@ -44,6 +45,7 @@ export default function Chat() {
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h1>Chat con Francesca 💋</h1>
+
       <div style={{ marginBottom: "10px" }}>
         <input
           type="text"
@@ -56,6 +58,7 @@ export default function Chat() {
           {loading ? "..." : "Invia"}
         </button>
       </div>
+
       <div style={{ whiteSpace: "pre-wrap" }}>
         {messages.map((msg, i) => (
           <p key={i}>{msg}</p>
