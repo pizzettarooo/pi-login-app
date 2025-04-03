@@ -1,52 +1,72 @@
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 
 export default function Ricarica() {
-  const [countdown, setCountdown] = useState(300); // 5 minuti = 300 secondi
-  const [wallet, setWallet] = useState<string | null>(null);
-  const router = useRouter();
+  const [wallet, setWallet] = useState("");
 
   useEffect(() => {
-    const savedWallet = localStorage.getItem("wallet");
-    if (savedWallet) setWallet(savedWallet);
-
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          router.push("/dashboard"); // Torna alla dashboard
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [router]);
-
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
+    const storedWallet = localStorage.getItem("wallet");
+    if (storedWallet) setWallet(storedWallet);
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white text-gray-800 p-4">
-      <h1 className="text-3xl font-bold mb-4">Ricarica Crediti</h1>
-      <p className="mb-2">Invia Pi al wallet qui sotto 👇</p>
-      <p className="font-mono text-lg p-2 bg-gray-100 rounded mb-4">
-        GCMEELHBN6VBVFGVRRD7PAGJZY63F3PWA4CL6QGXCYNMFPFL6J77B2RV
-      </p>
-      <p className="text-sm text-gray-600 mb-6">
-        Hai <span className="font-bold">{formatTime(countdown)}</span> per completare il pagamento.
-        Dopo verrai riportato automaticamente alla dashboard.
-      </p>
-      <button
-        className="text-blue-600 underline mt-4"
-        onClick={() => router.push("/dashboard")}
-      >
-        Torna subito alla dashboard
-      </button>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h1 style={styles.title}>💸 Ricarica il tuo conto</h1>
+        <p style={styles.text}>
+          Invia Pi al seguente wallet per ricevere crediti.
+        </p>
+        <p style={styles.wallet}>{wallet}</p>
+        <p style={styles.info}>
+          Una volta ricevuto il pagamento, i tuoi crediti verranno aggiornati
+          automaticamente.
+        </p>
+      </div>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    background: "linear-gradient(to right, #0f2027, #203a43, #2c5364)",
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "Arial, sans-serif",
+  },
+  card: {
+    backgroundColor: "#1a1a1a",
+    padding: "40px",
+    borderRadius: "16px",
+    boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)",
+    width: "90%",
+    maxWidth: "600px",
+    textAlign: "center" as const,
+    color: "#eee",
+  },
+  title: {
+    fontSize: "2rem",
+    color: "#00ffff",
+    marginBottom: "20px",
+  },
+  text: {
+    fontSize: "1.1rem",
+    marginBottom: "10px",
+  },
+  wallet: {
+    fontSize: "1.2rem",
+    fontWeight: "bold",
+    color: "#00bcd4",
+    wordBreak: "break-all" as const,
+    margin: "10px 0",
+    border: "1px dashed #00bcd4",
+    padding: "10px",
+    borderRadius: "8px",
+    backgroundColor: "#121212",
+  },
+  info: {
+    marginTop: "20px",
+    fontSize: "0.95rem",
+    color: "#ccc",
+  },
+};
