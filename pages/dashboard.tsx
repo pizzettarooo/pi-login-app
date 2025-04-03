@@ -8,45 +8,43 @@ export default function Dashboard() {
 
   useEffect(() => {
     const storedWallet = localStorage.getItem("wallet");
-    if (!storedWallet) {
+    const storedCredits = localStorage.getItem("credits");
+
+    if (!storedWallet || !storedCredits) {
       router.push("/login");
-      return;
+    } else {
+      setWallet(storedWallet);
+      setCredits(parseInt(storedCredits));
     }
+  }, []);
 
-    setWallet(storedWallet);
-
-    fetch(`/api/getCredits?wallet=${storedWallet}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.credits !== undefined) {
-          setCredits(data.credits);
-        }
-      });
-  }, [router]);
-
-  const handleLogout = () => {
+  const logout = () => {
     localStorage.removeItem("wallet");
-    router.push("/");
+    localStorage.removeItem("credits");
+    router.push("/login");
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div style={styles.page}>
+      <div style={styles.container}>
         <h1 style={styles.title}>
           <span role="img" aria-label="slot">🎰</span> Dashboard Utente
         </h1>
-        <div style={styles.walletContainer}>
-          <span style={styles.walletLabel}>Wallet:</span>
-          <span style={styles.walletValue}>{wallet}</span>
+        <div style={styles.walletWrapper}>
+          <p style={styles.label}>Wallet:</p>
+          <p style={styles.wallet}>{wallet}</p>
         </div>
-        <p style={styles.credits}>Crediti disponibili: <strong>{credits}</strong></p>
+        <p style={styles.crediti}>
+          Crediti disponibili: <b>{credits}</b>
+        </p>
+
         <button style={styles.button} onClick={() => router.push("/ricarica")}>
           Ricarica
         </button>
         <button style={styles.button} onClick={() => router.push("/chat")}>
           Modalità AI
         </button>
-        <button style={styles.logout} onClick={handleLogout}>
+        <button style={styles.logout} onClick={logout}>
           Logout
         </button>
       </div>
@@ -54,75 +52,68 @@ export default function Dashboard() {
   );
 }
 
-const styles = {
-  container: {
-    minHeight: "100vh",
+const styles: { [key: string]: React.CSSProperties } = {
+  page: {
+    background: "linear-gradient(to right, #0f2027, #203a43, #2c5364)",
+    height: "100vh",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "linear-gradient(to right, #0f2027, #203a43, #2c5364)",
+    color: "#fff",
   },
-  card: {
-    background: "#111",
-    padding: "40px",
-    borderRadius: "15px",
-    boxShadow: "0 0 25px rgba(0, 255, 255, 0.3)",
-    textAlign: "center" as const,
+  container: {
+    backgroundColor: "#111",
+    padding: "30px",
+    borderRadius: "16px",
+    boxShadow: "0 0 25px rgba(0, 255, 255, 0.4)",
+    textAlign: "center",
     width: "100%",
-    maxWidth: "480px",
+    maxWidth: "500px",
   },
   title: {
     color: "#00ffff",
-    marginBottom: "25px",
-    fontSize: "1.8rem",
+    fontSize: "28px",
+    marginBottom: "20px",
   },
-  walletContainer: {
-    marginBottom: "15px",
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "center",
-    maxWidth: "100%",
-    wordBreak: "break-all",
+  walletWrapper: {
+    wordWrap: "break-word",
+    overflowWrap: "break-word",
+    marginBottom: "10px",
   },
-  walletLabel: {
-    fontSize: "1.1rem",
-    color: "#ccc",
+  label: {
+    fontSize: "16px",
+    marginBottom: "4px",
   },
-  walletValue: {
+  wallet: {
+    fontSize: "14px",
     fontWeight: "bold",
-    color: "#fff",
-    fontSize: "0.9rem",
-    textAlign: "center" as const,
-    maxWidth: "100%",
-    overflowWrap: "break-word" as const,
-    padding: "5px 15px",
-    wordBreak: "break-word" as const,
-
+    color: "#eee",
+    wordBreak: "break-word",
   },
-  credits: {
-    color: "#ccc",
-    marginBottom: "25px",
+  crediti: {
+    margin: "20px 0",
+    fontSize: "16px",
   },
   button: {
-    background: "#00d4ff",
+    backgroundColor: "#00cfff",
     color: "#000",
-    padding: "12px 20px",
-    margin: "10px 0",
     border: "none",
-    borderRadius: "8px",
-    width: "100%",
+    padding: "12px 20px",
+    borderRadius: "10px",
+    marginBottom: "10px",
     cursor: "pointer",
+    width: "100%",
     fontWeight: "bold",
   },
   logout: {
-    background: "#ff4b4b",
+    backgroundColor: "#e74c3c",
     color: "#fff",
-    padding: "12px 20px",
     border: "none",
-    borderRadius: "8px",
-    width: "100%",
-    marginTop: "20px",
+    padding: "12px 20px",
+    borderRadius: "10px",
     cursor: "pointer",
+    width: "100%",
     fontWeight: "bold",
+    marginTop: "10px",
   },
 };
