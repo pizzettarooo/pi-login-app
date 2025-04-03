@@ -1,110 +1,64 @@
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 
 export default function Dashboard() {
   const [wallet, setWallet] = useState("");
-  const [credits, setCredits] = useState(0);
-  const router = useRouter();
+  const [credits, setCredits] = useState<number | null>(null);
 
   useEffect(() => {
     const storedWallet = localStorage.getItem("wallet");
-    const storedCredits = localStorage.getItem("credits");
-
-    if (!storedWallet || !storedCredits) {
-      router.push("/login");
-    } else {
+    if (storedWallet) {
       setWallet(storedWallet);
-      setCredits(parseInt(storedCredits));
+      fetchCredits(storedWallet);
     }
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("wallet");
-    localStorage.removeItem("credits");
-    router.push("/login");
+  const fetchCredits = async (wallet: string) => {
+    try {
+      const response = await fetch("/api/getCredits", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ wallet }),
+      });
+
+      const data = await response.json();
+      setCredits(data.credits ?? 0);
+    } catch (error) {
+      console.error("Errore nel recupero crediti:", error);
+    }
+  };
+
+  const handlePlayAI = () => {
+    window.location.href = "/chat";
+  };
+
+  const handleRecharge = () => {
+    window.location.href = "/ricarica";
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <h1 style={styles.title}>
-          <span role="img" aria-label="slot">🎰</span> Dashboard Utente
-        </h1>
-        <p style={styles.wallet}>
-          Wallet: <br />
-          <strong>{wallet}</strong>
-        </p>
-        <p style={styles.crediti}>
-          Crediti disponibili: <b>{credits}</b>
-        </p>
-
-        <button style={styles.button} onClick={() => router.push("/ricarica")}>
+    <div style={{ padding: "20px" }}>
+      <h1>
+        <span role="img" aria-label="slot">
+          🎰
+        </span>{" "}
+        Dashboard Utente
+      </h1>
+      <div>
+        <span>Wallet: </span>
+        <strong>{wallet}</strong>
+      </div>
+      <div>
+        <span>Crediti: </span>
+        <strong>{credits !== null ? credits : "Caricamento..."}</strong>
+      </div>
+      <div style={{ marginTop: "20px" }}>
+        <button onClick={handlePlayAI}>Gioca con AI</button>
+        <button onClick={handleRecharge} style={{ marginLeft: "10px" }}>
           Ricarica
-        </button>
-        <button style={styles.button} onClick={() => router.push("/chat")}>
-          Modalità AI
-        </button>
-        <button style={styles.logout} onClick={logout}>
-          Logout
         </button>
       </div>
     </div>
   );
 }
-
-const styles: { [key: string]: React.CSSProperties } = {
-  page: {
-    background: "linear-gradient(to right, #0f2027, #203a43, #2c5364)",
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    color: "#fff",
-  },
-  container: {
-    backgroundColor: "#111",
-    padding: "30px",
-    borderRadius: "16px",
-    boxShadow: "0 0 25px rgba(0, 255, 255, 0.4)",
-    textAlign: "center",
-    width: "100%",
-    maxWidth: "500px",
-  },
-  title: {
-    color: "#00ffff",
-    fontSize: "28px",
-    marginBottom: "20px",
-  },
-  wallet: {
-    fontSize: "14px",
-    fontWeight: "bold",
-    color: "#eee",
-    marginBottom: "10px",
-  },
-  crediti: {
-    margin: "20px 0",
-    fontSize: "16px",
-  },
-  button: {
-    backgroundColor: "#00cfff",
-    color: "#000",
-    border: "none",
-    padding: "12px 20px",
-    borderRadius: "10px",
-    marginBottom: "10px",
-    cursor: "pointer",
-    width: "100%",
-    fontWeight: "bold",
-  },
-  logout: {
-    backgroundColor: "#e74c3c",
-    color: "#fff",
-    border: "none",
-    padding: "12px 20px",
-    borderRadius: "10px",
-    cursor: "pointer",
-    width: "100%",
-    fontWeight: "bold",
-    marginTop: "10px",
-  },
-};
