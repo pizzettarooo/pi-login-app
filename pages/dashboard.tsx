@@ -96,7 +96,8 @@ const styles = {
     maxWidth: "100%",
     overflowWrap: "break-word" as const,
     padding: "5px 15px",
-    wordBreak: "break-word",
+    wordBreak: "break-word" as const,
+
   },
   credits: {
     color: "#ccc",
