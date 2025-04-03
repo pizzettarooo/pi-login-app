@@ -2,93 +2,107 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
 export default function Dashboard() {
-  const [credits, setCredits] = useState<number>(0);
-  const [wallet, setWallet] = useState<string | null>(null);
   const router = useRouter();
+  const [wallet, setWallet] = useState("");
+  const [credits, setCredits] = useState<number | null>(null);
 
   useEffect(() => {
-    const savedWallet = localStorage.getItem("wallet");
-    if (savedWallet) {
-      console.log("💾 Wallet:", savedWallet);
-      setWallet(savedWallet);
-      fetchCredits(savedWallet);
+    const storedWallet = localStorage.getItem("wallet");
+    if (!storedWallet) {
+      router.push("/login");
     } else {
-      console.warn("⚠️ Nessun wallet trovato nel localStorage.");
+      setWallet(storedWallet);
+      fetchCredits(storedWallet);
     }
   }, []);
 
-  async function fetchCredits(wallet: string) {
+  const fetchCredits = async (wallet: string) => {
     try {
-      const res = await fetch("/api/getCredits", {
+      const response = await fetch("/api/getCredits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wallet }),
       });
-
-      const data = await res.json();
-      if (data.success) {
-        setCredits(data.credits);
-      } else {
-        setCredits(0);
-      }
-    } catch (err) {
-      console.error("Errore nel recupero crediti:", err);
+      const data = await response.json();
+      setCredits(data.credits);
+    } catch (error) {
+      console.error("Errore durante il recupero dei crediti:", error);
     }
-  }
+  };
 
-  // ✅ Funzione per chiamare AI su Railway
-  async function handleAskAI() {
-    try {
-      const res = await fetch("https://replicate-ai-production.up.railway.app/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: "Ciao, come stai?" }),
-      });
-
-      const data = await res.json();
-      console.log("🤖 Risposta AI:", data.output);
-      alert(data.output);
-    } catch (err) {
-      console.error("Errore nella richiesta AI:", err);
-      alert("❌ Errore nel contattare l'AI.");
-    }
-  }
+  const handleLogout = () => {
+    localStorage.removeItem("wallet");
+    router.push("/login");
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-gray-800 p-4">
-      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-      {wallet ? (
-        <>
-          <p className="text-xl text-center mb-4">
-            Wallet: <strong>{wallet}</strong><br />
-            Crediti disponibili: <strong>{credits}</strong> Pi 💰
-          </p>
-
-          <button
-            className="mb-3 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            onClick={() => router.push("/ricarica")}
-          >
-            Ricarica crediti
-          </button>
-
-          <button
-            className="mb-3 px-6 py-2 bg-pink-600 text-white rounded hover:bg-pink-700"
-            onClick={() => router.push("/chat")}
-          >
-            💋 Chatta con Giulia (1 Pi / messaggio)
-          </button>
-
-          {/* ✅ Bottone per test diretto su Railway */}
-          <button
-            className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            onClick={handleAskAI}
-          >
-            Test AI su Railway
-          </button>
-        </>
-      ) : (
-        <p className="text-red-500">Nessun wallet trovato. Fai il login prima!</p>
-      )}
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h1 style={styles.title}>🎰 Dashboard Utente</h1>
+        <p style={styles.text}>Wallet: <strong>{wallet}</strong></p>
+        <p style={styles.text}>Crediti disponibili: <strong>{credits ?? "Caricamento..."}</strong></p>
+        <div style={styles.buttons}>
+          <button style={styles.button} onClick={() => router.push("/ricarica")}>Ricarica</button>
+          <button style={styles.button} onClick={() => router.push("/chat")}>Modalità AI</button>
+          <button style={styles.logout} onClick={handleLogout}>Logout</button>
+        </div>
+      </div>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    background: "linear-gradient(to right, #0f2027, #203a43, #2c5364)",
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#eee",
+    fontFamily: "Arial, sans-serif",
+  },
+  card: {
+    backgroundColor: "#1a1a1a",
+    padding: "40px",
+    borderRadius: "16px",
+    boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)",
+    width: "90%",
+    maxWidth: "500px",
+    textAlign: "center" as const,
+  },
+  title: {
+    fontSize: "2rem",
+    marginBottom: "20px",
+    color: "#00ffff",
+  },
+  text: {
+    fontSize: "1.2rem",
+    marginBottom: "10px",
+  },
+  buttons: {
+    marginTop: "20px",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "10px",
+  },
+  button: {
+    padding: "10px 20px",
+    background: "#00bcd4",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    color: "#fff",
+    transition: "background 0.2s",
+  },
+  logout: {
+    padding: "10px 20px",
+    background: "#e53935",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    color: "#fff",
+    marginTop: "10px",
+  },
+};
