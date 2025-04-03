@@ -2,50 +2,53 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
 export default function Dashboard() {
-  const router = useRouter();
   const [wallet, setWallet] = useState("");
-  const [credits, setCredits] = useState<number | null>(null);
+  const [credits, setCredits] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     const storedWallet = localStorage.getItem("wallet");
     if (!storedWallet) {
       router.push("/login");
-    } else {
-      setWallet(storedWallet);
-      fetchCredits(storedWallet);
+      return;
     }
-  }, []);
 
-  const fetchCredits = async (wallet: string) => {
-    try {
-      const response = await fetch("/api/getCredits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet }),
+    setWallet(storedWallet);
+
+    fetch(`/api/getCredits?wallet=${storedWallet}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.credits !== undefined) {
+          setCredits(data.credits);
+        }
       });
-      const data = await response.json();
-      setCredits(data.credits);
-    } catch (error) {
-      console.error("Errore durante il recupero dei crediti:", error);
-    }
-  };
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("wallet");
-    router.push("/login");
+    router.push("/");
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>🎰 Dashboard Utente</h1>
-        <p style={styles.text}>Wallet: <strong>{wallet}</strong></p>
-        <p style={styles.text}>Crediti disponibili: <strong>{credits ?? "Caricamento..."}</strong></p>
-        <div style={styles.buttons}>
-          <button style={styles.button} onClick={() => router.push("/ricarica")}>Ricarica</button>
-          <button style={styles.button} onClick={() => router.push("/chat")}>Modalità AI</button>
-          <button style={styles.logout} onClick={handleLogout}>Logout</button>
+        <h1 style={styles.title}>
+          <span role="img" aria-label="slot">🎰</span> Dashboard Utente
+        </h1>
+        <div style={styles.walletContainer}>
+          <span style={styles.walletLabel}>Wallet:</span>
+          <span style={styles.walletValue}>{wallet}</span>
         </div>
+        <p style={styles.credits}>Crediti disponibili: <strong>{credits}</strong></p>
+        <button style={styles.button} onClick={() => router.push("/ricarica")}>
+          Ricarica
+        </button>
+        <button style={styles.button} onClick={() => router.push("/chat")}>
+          Modalità AI
+        </button>
+        <button style={styles.logout} onClick={handleLogout}>
+          Logout
+        </button>
       </div>
     </div>
   );
@@ -53,56 +56,72 @@ export default function Dashboard() {
 
 const styles = {
   container: {
-    background: "linear-gradient(to right, #0f2027, #203a43, #2c5364)",
     minHeight: "100vh",
     display: "flex",
-    alignItems: "center",
     justifyContent: "center",
-    color: "#eee",
-    fontFamily: "Arial, sans-serif",
+    alignItems: "center",
+    background: "linear-gradient(to right, #0f2027, #203a43, #2c5364)",
   },
   card: {
-    backgroundColor: "#1a1a1a",
+    background: "#111",
     padding: "40px",
-    borderRadius: "16px",
-    boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)",
-    width: "90%",
-    maxWidth: "500px",
+    borderRadius: "15px",
+    boxShadow: "0 0 25px rgba(0, 255, 255, 0.3)",
     textAlign: "center" as const,
+    width: "100%",
+    maxWidth: "480px",
   },
   title: {
-    fontSize: "2rem",
-    marginBottom: "20px",
     color: "#00ffff",
+    marginBottom: "25px",
+    fontSize: "1.8rem",
   },
-  text: {
-    fontSize: "1.2rem",
-    marginBottom: "10px",
-  },
-  buttons: {
-    marginTop: "20px",
+  walletContainer: {
+    marginBottom: "15px",
     display: "flex",
     flexDirection: "column" as const,
-    gap: "10px",
+    alignItems: "center",
+    maxWidth: "100%",
+    wordBreak: "break-all",
+  },
+  walletLabel: {
+    fontSize: "1.1rem",
+    color: "#ccc",
+  },
+  walletValue: {
+    fontWeight: "bold",
+    color: "#fff",
+    fontSize: "0.9rem",
+    textAlign: "center" as const,
+    maxWidth: "100%",
+    overflowWrap: "break-word" as const,
+    padding: "5px 15px",
+    wordBreak: "break-word",
+  },
+  credits: {
+    color: "#ccc",
+    marginBottom: "25px",
   },
   button: {
-    padding: "10px 20px",
-    background: "#00bcd4",
+    background: "#00d4ff",
+    color: "#000",
+    padding: "12px 20px",
+    margin: "10px 0",
     border: "none",
     borderRadius: "8px",
+    width: "100%",
     cursor: "pointer",
     fontWeight: "bold",
-    color: "#fff",
-    transition: "background 0.2s",
   },
   logout: {
-    padding: "10px 20px",
-    background: "#e53935",
+    background: "#ff4b4b",
+    color: "#fff",
+    padding: "12px 20px",
     border: "none",
     borderRadius: "8px",
+    width: "100%",
+    marginTop: "20px",
     cursor: "pointer",
     fontWeight: "bold",
-    color: "#fff",
-    marginTop: "10px",
   },
 };
