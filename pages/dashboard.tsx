@@ -30,10 +30,10 @@ export default function Dashboard() {
         <h1 style={styles.title}>
           <span role="img" aria-label="slot">🎰</span> Dashboard Utente
         </h1>
-        <div style={styles.walletWrapper}>
-          <p style={styles.label}>Wallet:</p>
-          <p style={styles.wallet}>{wallet}</p>
-        </div>
+        <p style={styles.wallet}>
+          Wallet: <br />
+          <strong>{wallet}</strong>
+        </p>
         <p style={styles.crediti}>
           Crediti disponibili: <b>{credits}</b>
         </p>
@@ -75,20 +75,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "28px",
     marginBottom: "20px",
   },
-  walletWrapper: {
-    wordWrap: "break-word",
-    overflowWrap: "break-word",
-    marginBottom: "10px",
-  },
-  label: {
-    fontSize: "16px",
-    marginBottom: "4px",
-  },
   wallet: {
     fontSize: "14px",
     fontWeight: "bold",
     color: "#eee",
-    wordBreak: "break-word",
+    marginBottom: "10px",
   },
   crediti: {
     margin: "20px 0",
