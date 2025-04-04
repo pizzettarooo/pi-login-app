@@ -43,20 +43,43 @@ export default function AiSlot() {
   const spin = () => {
     if (isSpinning || turn >= 10 || !bonusSymbol) return;
     setIsSpinning(true);
-    const newReels: string[][] = [[], [], []];
-    for (let i = 0; i < 3; i++) {
-      newReels[i] = Array.from({ length: 5 }, getRandomSymbol);
-    }
-    setResultSymbols(newReels);
+    const tempResults: string[][] = [[], [], []];
 
-    setTimeout(() => {
-      const flatSymbols = newReels.flat();
-      const matchCount = flatSymbols.filter(s => s === bonusSymbol).length;
-      setScore(prev => prev + matchCount * 10);
-      setBonusHits(prev => prev + matchCount);
-      setTurn(prev => prev + 1);
-      setIsSpinning(false);
-    }, 1400);
+    const intervals: NodeJS.Timeout[] = [];
+
+    for (let reelIndex = 0; reelIndex < 3; reelIndex++) {
+      let count = 0;
+      const interval = setInterval(() => {
+        count++;
+        const reelSymbols = Array.from({ length: 5 }, getRandomSymbol);
+        tempResults[reelIndex] = reelSymbols;
+        setResultSymbols([...tempResults]);
+
+        if (count > 20 + reelIndex * 10) {
+          clearInterval(interval);
+          if (reelIndex === 2) {
+            setTimeout(() => {
+              const visibleSymbols = tempResults.map(reel => reel.slice(1, 4));
+              let points = 0;
+              let hits = 0;
+              visibleSymbols.forEach(reel => {
+                reel.forEach(symbol => {
+                  if (symbol === bonusSymbol) {
+                    points += 10;
+                    hits++;
+                  }
+                });
+              });
+              setScore(prev => prev + points);
+              setBonusHits(prev => prev + hits);
+              setTurn(prev => prev + 1);
+              setIsSpinning(false);
+            }, 300);
+          }
+        }
+      }, 60);
+      intervals.push(interval);
+    }
   };
 
   const styles = {
@@ -131,73 +154,68 @@ export default function AiSlot() {
       marginTop: '1rem',
       color: '#FFD700',
     },
-    summaryBox: {
+    summary: {
       textAlign: 'center' as const,
-      background: '#1c1c2b',
+      backgroundColor: '#1c1c1c',
       padding: '2rem',
-      borderRadius: '16px',
+      borderRadius: '20px',
       border: '2px solid #00FFFF',
-      boxShadow: '0 0 20px #00FFFF88'
-    },
-    summaryTitle: {
-      fontSize: '1.5rem',
-      marginBottom: '1rem',
-      color: '#00FFFF'
     },
     backButton: {
       marginTop: '1.5rem',
-      padding: '0.5rem 1rem',
+      padding: '0.5rem 1.2rem',
       fontSize: '1rem',
-      backgroundColor: '#00BFFF',
-      color: '#000',
-      borderRadius: '10px',
+      fontWeight: 'bold' as const,
+      color: '#fff',
+      backgroundColor: '#00CED1',
       border: 'none',
+      borderRadius: '10px',
       cursor: 'pointer'
     }
   };
+
+  if (showSummary) {
+    return (
+      <div style={styles.page}>
+        <div style={styles.summary}>
+          <h2>🎉 Partita terminata!</h2>
+          <p>Punti totali: {score}</p>
+          <p>Bonus "{bonusSymbol?.toUpperCase()}" uscito: {bonusHits} volte</p>
+          <button style={styles.backButton} onClick={() => router.push('/dashboard')}>
+            Torna alla Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
       {bonusSymbol && <div style={styles.bonus}>🎯 Bonus selezionato: {bonusSymbol.toUpperCase()}</div>}
-      {!showSummary && (
-        <>
-          <div style={styles.slotContainer}>
-            {resultSymbols.map((reel, i) => (
-              <div key={i} style={styles.reel}>
-                <div style={styles.reelInner}>
-                  {reel.map((symbol, j) => (
-                    <div key={j} style={styles.symbolBox}>
-                      <Image
-                        src={`/slot-symbols/${symbol}.png`}
-                        alt={symbol}
-                        width={140}
-                        height={140}
-                        style={{ objectFit: 'contain' }}
-                      />
-                    </div>
-                  ))}
+      <div style={styles.slotContainer}>
+        {resultSymbols.map((reel, i) => (
+          <div key={i} style={styles.reel}>
+            <div style={styles.reelInner}>
+              {reel.map((symbol, j) => (
+                <div key={j} style={styles.symbolBox}>
+                  <Image
+                    src={`/slot-symbols/${symbol}.png`}
+                    alt={symbol}
+                    width={140}
+                    height={140}
+                    style={{ objectFit: 'contain' }}
+                  />
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
-          <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
-            🎰 Gira
-          </button>
-        </>
-      )}
-
-      {showSummary && (
-        <div style={styles.summaryBox}>
-          <h2 style={styles.summaryTitle}>🎉 Resoconto partita</h2>
-          <p>Hai totalizzato <strong>{score}</strong> punti</p>
-          <p>Il simbolo bonus "{bonusSymbol?.toUpperCase()}" è uscito <strong>{bonusHits}</strong> volte</p>
-          <button style={styles.backButton} onClick={() => router.push('/dashboard')}>
-            Torna alla Dashboard
-          </button>
-        </div>
-      )}
+        ))}
+      </div>
+      <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
+      <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
+        🎰 Gira
+      </button>
     </div>
   );
 }
