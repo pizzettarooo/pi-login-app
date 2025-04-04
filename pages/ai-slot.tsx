@@ -15,13 +15,18 @@ const getRandomSymbols = () => {
 
 export default function AiSlot() {
   const [reels, setReels] = useState(getRandomSymbols());
+  const [displayedReels, setDisplayedReels] = useState(reels);
   const [isSpinning, setIsSpinning] = useState(false);
 
   const spin = () => {
     if (isSpinning) return;
+    const newSymbols = getRandomSymbols();
     setIsSpinning(true);
-    setReels(getRandomSymbols());
-    setTimeout(() => setIsSpinning(false), 1500);
+    setTimeout(() => {
+      setDisplayedReels(newSymbols);
+      setIsSpinning(false);
+    }, 2500); // più tempo di spin
+    setReels(newSymbols); // serve per iniziare l’animazione subito
   };
 
   const styles = {
@@ -65,7 +70,7 @@ export default function AiSlot() {
       display: 'flex',
       flexDirection: 'column' as const,
       transform: spin ? 'translateY(-240px)' : 'translateY(0)',
-      transition: spin ? 'transform 1.2s ease-out' : 'none',
+      transition: spin ? 'transform 0.5s ease-in' : 'none',
     }),
     symbolBox: {
       width: '100%',
@@ -92,7 +97,7 @@ export default function AiSlot() {
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
       <div style={styles.slotContainer}>
-        {reels.map((reel, i) => (
+        {displayedReels.map((reel, i) => (
           <div key={i} style={styles.reel}>
             <div style={styles.reelInner(isSpinning)}>
               {reel.map((symbol, j) => (
