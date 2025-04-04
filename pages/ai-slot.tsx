@@ -36,52 +36,27 @@ export default function AiSlot() {
   useEffect(() => {
     if (turn >= 10) {
       localStorage.removeItem('bonusSymbol');
-      setTimeout(() => setShowSummary(true), 800);
+      setTimeout(() => setShowSummary(true), 1000);
     }
   }, [turn]);
 
   const spin = () => {
     if (isSpinning || turn >= 10 || !bonusSymbol) return;
     setIsSpinning(true);
-    const intervals: NodeJS.Timeout[] = [];
-
-    for (let reelIndex = 0; reelIndex < 3; reelIndex++) {
-      let count = 0;
-      const interval = setInterval(() => {
-        count++;
-        setResultSymbols(prev => {
-          const updated = [...prev];
-          updated[reelIndex] = Array.from({ length: 5 }, getRandomSymbol);
-          return updated;
-        });
-        if (count > 20 + reelIndex * 10) {
-          clearInterval(interval);
-          if (reelIndex === 2) {
-            setTimeout(() => {
-              calculateScore();
-              setTurn(prev => prev + 1);
-              setIsSpinning(false);
-            }, 200);
-          }
-        }
-      }, 60);
-      intervals.push(interval);
+    const newReels: string[][] = [[], [], []];
+    for (let i = 0; i < 3; i++) {
+      newReels[i] = Array.from({ length: 5 }, getRandomSymbol);
     }
-  };
+    setResultSymbols(newReels);
 
-  const calculateScore = () => {
-    let points = 0;
-    let hits = 0;
-    resultSymbols.forEach(reel => {
-      reel.forEach(symbol => {
-        if (symbol === bonusSymbol) {
-          points += 10;
-          hits++;
-        }
-      });
-    });
-    setScore(prev => prev + points);
-    setBonusHits(prev => prev + hits);
+    setTimeout(() => {
+      const flatSymbols = newReels.flat();
+      const matchCount = flatSymbols.filter(s => s === bonusSymbol).length;
+      setScore(prev => prev + matchCount * 10);
+      setBonusHits(prev => prev + matchCount);
+      setTurn(prev => prev + 1);
+      setIsSpinning(false);
+    }, 1400);
   };
 
   const styles = {
@@ -157,21 +132,26 @@ export default function AiSlot() {
       color: '#FFD700',
     },
     summaryBox: {
-      marginTop: '2rem',
-      padding: '1.5rem',
-      backgroundColor: '#1a1a1a',
+      textAlign: 'center' as const,
+      background: '#1c1c2b',
+      padding: '2rem',
       borderRadius: '16px',
       border: '2px solid #00FFFF',
-      textAlign: 'center' as const
+      boxShadow: '0 0 20px #00FFFF88'
     },
-    dashboardButton: {
-      marginTop: '1rem',
-      padding: '0.5rem 1.2rem',
+    summaryTitle: {
+      fontSize: '1.5rem',
+      marginBottom: '1rem',
+      color: '#00FFFF'
+    },
+    backButton: {
+      marginTop: '1.5rem',
+      padding: '0.5rem 1rem',
       fontSize: '1rem',
-      backgroundColor: '#00CED1',
-      border: 'none',
-      borderRadius: '8px',
+      backgroundColor: '#00BFFF',
       color: '#000',
+      borderRadius: '10px',
+      border: 'none',
       cursor: 'pointer'
     }
   };
@@ -207,12 +187,13 @@ export default function AiSlot() {
           </button>
         </>
       )}
+
       {showSummary && (
         <div style={styles.summaryBox}>
-          <h2>🎉 Partita conclusa!</h2>
-          <p>Punti totali: {score}</p>
-          <p>{bonusSymbol?.toUpperCase()} trovato {bonusHits} volte</p>
-          <button style={styles.dashboardButton} onClick={() => router.push('/dashboard')}>
+          <h2 style={styles.summaryTitle}>🎉 Resoconto partita</h2>
+          <p>Hai totalizzato <strong>{score}</strong> punti</p>
+          <p>Il simbolo bonus "{bonusSymbol?.toUpperCase()}" è uscito <strong>{bonusHits}</strong> volte</p>
+          <button style={styles.backButton} onClick={() => router.push('/dashboard')}>
             Torna alla Dashboard
           </button>
         </div>
