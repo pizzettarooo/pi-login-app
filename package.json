@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fontsource/orbitron": "^5.2.5",
     "@pinetwork-js/sdk": "^0.6.0",
     "@supabase/supabase-js": "^2.49.1",
     "axios": "^1.8.4",
