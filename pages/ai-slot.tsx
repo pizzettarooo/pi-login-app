@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
+import '@fontsource/orbitron'; // npm install @fontsource/orbitron
 
 const symbols = [
   'arancia', 'banana', 'bar', 'ciliegia', 'dollaro',
@@ -39,13 +40,12 @@ export default function AiSlot() {
     },
     title: {
       fontSize: '2.5rem',
-      marginBottom: '1rem',
+      marginBottom: '1.5rem',
       fontWeight: 'bold' as const,
       color: '#00FFFF',
-      textShadow: '0 0 8px #00FFFF',
-      position: 'relative' as const,
-      top: '10px',
-      zIndex: 2
+      fontFamily: 'Orbitron, sans-serif',
+      textShadow: '0 0 10px #0ff, 0 0 20px #0ff',
+      transform: 'translateY(-10px)',
     },
     slotGrid: {
       display: 'grid',
