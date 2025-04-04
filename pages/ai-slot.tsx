@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import '@fontsource/orbitron';
 
@@ -8,25 +8,38 @@ const symbols = [
   'melone', 'prugna', 'sette', 'stella', 'trisette', 'uva', 'wild'
 ];
 
-const getRandomSymbols = () => {
-  const r = () => symbols[Math.floor(Math.random() * symbols.length)];
-  return Array.from({ length: 3 }, () => [r(), r(), r(), r(), r()]);
-};
+const getRandomSymbol = () => symbols[Math.floor(Math.random() * symbols.length)];
 
 export default function AiSlot() {
-  const [reels, setReels] = useState(getRandomSymbols());
-  const [displayedReels, setDisplayedReels] = useState(reels);
+  const [resultSymbols, setResultSymbols] = useState([[], [], []]); // Finali
   const [isSpinning, setIsSpinning] = useState(false);
+  const intervalRefs = useRef<(NodeJS.Timeout | null)[]>([null, null, null]);
 
-  const spin = () => {
+  const startSpinning = () => {
     if (isSpinning) return;
-    const newSymbols = getRandomSymbols();
     setIsSpinning(true);
+
+    // Animazione continua con simboli casuali
+    const newIntervals = [0, 1, 2].map((reelIndex) =>
+      setInterval(() => {
+        setResultSymbols(prev => {
+          const updated = [...prev];
+          updated[reelIndex] = Array.from({ length: 5 }, getRandomSymbol);
+          return updated;
+        });
+      }, 100)
+    );
+    intervalRefs.current = newIntervals;
+
+    // Dopo 2.5s ferma e mostra il vero risultato
     setTimeout(() => {
-      setDisplayedReels(newSymbols);
+      intervalRefs.current.forEach(clearInterval);
+      const finalResult = Array.from({ length: 3 }, () =>
+        Array.from({ length: 5 }, getRandomSymbol)
+      );
+      setResultSymbols(finalResult);
       setIsSpinning(false);
-    }, 2500); // più tempo di spin
-    setReels(newSymbols); // serve per iniziare l’animazione subito
+    }, 2500);
   };
 
   const styles = {
@@ -65,13 +78,10 @@ export default function AiSlot() {
       backgroundColor: '#121212',
       border: '2px solid #ffffff55',
       boxShadow: 'inset 0 0 5px #00000099',
-    },
-    reelInner: (spin: boolean) => ({
       display: 'flex',
       flexDirection: 'column' as const,
-      transform: spin ? 'translateY(-240px)' : 'translateY(0)',
-      transition: spin ? 'transform 0.5s ease-in' : 'none',
-    }),
+      justifyContent: 'start'
+    },
     symbolBox: {
       width: '100%',
       height: '100px',
@@ -97,25 +107,23 @@ export default function AiSlot() {
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
       <div style={styles.slotContainer}>
-        {displayedReels.map((reel, i) => (
+        {resultSymbols.map((reel, i) => (
           <div key={i} style={styles.reel}>
-            <div style={styles.reelInner(isSpinning)}>
-              {reel.map((symbol, j) => (
-                <div key={j} style={styles.symbolBox}>
-                  <Image
-                    src={`/slot-symbols/${symbol}.png`}
-                    alt={symbol}
-                    width={140}
-                    height={140}
-                    style={{ objectFit: 'contain' }}
-                  />
-                </div>
-              ))}
-            </div>
+            {reel.map((symbol, j) => (
+              <div key={j} style={styles.symbolBox}>
+                <Image
+                  src={`/slot-symbols/${symbol}.png`}
+                  alt={symbol}
+                  width={140}
+                  height={140}
+                  style={{ objectFit: 'contain' }}
+                />
+              </div>
+            ))}
           </div>
         ))}
       </div>
-      <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
+      <button style={styles.spinButton} onClick={startSpinning} disabled={isSpinning}>
         🎰 Gira
       </button>
     </div>
