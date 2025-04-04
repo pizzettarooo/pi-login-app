@@ -55,7 +55,7 @@ export default function AiSlot() {
       color: '#00FFFF',
       textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
     },
-    slotGrid: {
+    slotContainer: {
       display: 'flex',
       gap: '10px',
       padding: '1.5rem',
@@ -68,17 +68,17 @@ export default function AiSlot() {
     column: {
       display: 'flex',
       flexDirection: 'column' as const,
-      gap: '10px',
+      gap: '10px'
     },
     cell: {
+      width: '100px',
+      height: '100px',
       backgroundColor: '#121212',
       border: '2px solid #ffffff55',
       borderRadius: '16px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      width: '100px',
-      height: '100px',
       boxShadow: 'inset 0 0 5px #00000099',
       transition: 'transform 0.2s ease',
     },
@@ -100,11 +100,11 @@ export default function AiSlot() {
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
 
-      <div style={styles.slotGrid}>
-        {columns.map((column, columnIndex) => (
-          <div key={columnIndex} style={styles.column}>
+      <div style={styles.slotContainer}>
+        {columns.map((column, colIndex) => (
+          <div key={colIndex} style={styles.column}>
             {column.map((symbol, rowIndex) => (
-              <div key={`${columnIndex}-${rowIndex}`} style={styles.cell}>
+              <div key={`${colIndex}-${rowIndex}`} style={styles.cell}>
                 {symbol && (
                   <Image
                     src={symbol}
