@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import '@fontsource/orbitron';
 
@@ -14,26 +14,31 @@ const getRandomSymbol = () => {
 };
 
 export default function AiSlot() {
-  const [columns, setColumns] = useState([
+  const [reels, setReels] = useState([
     ['', '', ''],
     ['', '', ''],
     ['', '', '']
   ]);
-
   const [spinning, setSpinning] = useState(false);
 
   const spin = () => {
     if (spinning) return;
     setSpinning(true);
 
-    const newColumns = Array.from({ length: 3 }, () =>
-      Array.from({ length: 3 }, () => getRandomSymbol())
-    );
+    let ticks = 0;
+    const interval = setInterval(() => {
+      setReels([
+        [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()],
+        [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()],
+        [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()]
+      ]);
 
-    setTimeout(() => {
-      setColumns(newColumns);
-      setSpinning(false);
-    }, 1200);
+      ticks++;
+      if (ticks > 15) {
+        clearInterval(interval);
+        setSpinning(false);
+      }
+    }, 80);
   };
 
   const styles = {
@@ -55,9 +60,9 @@ export default function AiSlot() {
       color: '#00FFFF',
       textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
     },
-    slotContainer: {
+    slotGrid: {
       display: 'flex',
-      gap: '10px',
+      gap: '12px',
       padding: '1.5rem',
       borderRadius: '30px',
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
@@ -65,10 +70,10 @@ export default function AiSlot() {
       border: '6px solid #8a2be2',
       position: 'relative' as const,
     },
-    column: {
+    reel: {
       display: 'flex',
       flexDirection: 'column' as const,
-      gap: '10px'
+      gap: '10px',
     },
     cell: {
       width: '100px',
@@ -80,7 +85,6 @@ export default function AiSlot() {
       alignItems: 'center',
       justifyContent: 'center',
       boxShadow: 'inset 0 0 5px #00000099',
-      transition: 'transform 0.2s ease',
     },
     spinButton: {
       marginTop: '2rem',
@@ -100,11 +104,11 @@ export default function AiSlot() {
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
 
-      <div style={styles.slotContainer}>
-        {columns.map((column, colIndex) => (
-          <div key={colIndex} style={styles.column}>
-            {column.map((symbol, rowIndex) => (
-              <div key={`${colIndex}-${rowIndex}`} style={styles.cell}>
+      <div style={styles.slotGrid}>
+        {reels.map((reel, reelIndex) => (
+          <div key={reelIndex} style={styles.reel}>
+            {reel.map((symbol, rowIndex) => (
+              <div key={`${reelIndex}-${rowIndex}`} style={styles.cell}>
                 {symbol && (
                   <Image
                     src={symbol}
