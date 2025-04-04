@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import '@fontsource/orbitron';
 
 const symbols = [
@@ -14,8 +15,19 @@ const getRandomSymbol = () => {
 };
 
 export default function AiSlot() {
+  const router = useRouter();
+  const [bonusSymbol, setBonusSymbol] = useState<string | null>(null);
   const [resultSymbols, setResultSymbols] = useState<string[][]>([[], [], []]);
   const [isSpinning, setIsSpinning] = useState(false);
+
+  useEffect(() => {
+    const savedBonus = localStorage.getItem('bonusSymbol');
+    if (!savedBonus) {
+      router.push('/ChooseBonusSymbol');
+    } else {
+      setBonusSymbol(savedBonus);
+    }
+  }, []);
 
   const spin = () => {
     if (isSpinning) return;
@@ -60,6 +72,12 @@ export default function AiSlot() {
       color: '#00FFFF',
       textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
       marginBottom: '1.2rem'
+    },
+    bonus: {
+      fontSize: '1rem',
+      marginBottom: '1rem',
+      fontWeight: 'bold' as const,
+      color: '#00FFAA'
     },
     slotContainer: {
       display: 'flex',
@@ -108,6 +126,7 @@ export default function AiSlot() {
   return (
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
+      {bonusSymbol && <div style={styles.bonus}>🎯 Bonus selezionato: {bonusSymbol.toUpperCase()}</div>}
       <div style={styles.slotContainer}>
         {resultSymbols.map((reel, i) => (
           <div key={i} style={styles.reel}>
