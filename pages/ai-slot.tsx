@@ -103,8 +103,8 @@ export default function AiSlot() {
                 <Image
                   src={symbol}
                   alt="symbol"
-                  width={80}
-                  height={80}
+                  width={140}
+                  height={140}
                   style={{ objectFit: 'contain' }}
                 />
               )}
