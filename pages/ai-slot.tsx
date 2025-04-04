@@ -9,57 +9,53 @@ const symbols = [
   'melone', 'prugna', 'sette', 'stella', 'trisette', 'uva', 'wild'
 ];
 
-const getRandomSymbol = () => {
-  const index = Math.floor(Math.random() * symbols.length);
-  return symbols[index];
-};
+const getRandomSymbol = () => symbols[Math.floor(Math.random() * symbols.length)];
 
 export default function AiSlot() {
   const router = useRouter();
-  const [bonusSymbol, setBonusSymbol] = useState<string | null>(null);
   const [resultSymbols, setResultSymbols] = useState<string[][]>([[], [], []]);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [turn, setTurn] = useState(0);
+  const [bonusSymbol, setBonusSymbol] = useState<string>('');
   const [score, setScore] = useState(0);
+  const [turnsLeft, setTurnsLeft] = useState(10);
 
   useEffect(() => {
-    const savedBonus = localStorage.getItem('bonusSymbol');
-    if (!savedBonus) {
-      router.push('/ChooseBonusSymbol');
-    } else {
-      setBonusSymbol(savedBonus);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (turn >= 10) {
-      localStorage.removeItem('bonusSymbol');
-      setTimeout(() => router.push('/dashboard'), 1000);
-    }
-  }, [turn]);
+    const saved = localStorage.getItem('selectedBonusSymbol');
+    if (!saved) router.push('/ChooseBonusSymbol');
+    else setBonusSymbol(saved);
+  }, [router]);
 
   const spin = () => {
-    if (isSpinning || turn >= 10 || !bonusSymbol) return;
+    if (isSpinning || turnsLeft <= 0) return;
     setIsSpinning(true);
     const intervals: NodeJS.Timeout[] = [];
+    const tempSymbols: string[][] = [[], [], []];
+    let completedReels = 0;
 
     for (let reelIndex = 0; reelIndex < 3; reelIndex++) {
       let count = 0;
       const interval = setInterval(() => {
         count++;
-        setResultSymbols(prev => {
+        const newSymbols = Array.from({ length: 5 }, getRandomSymbol);
+        tempSymbols[reelIndex] = newSymbols;
+        setResultSymbols((prev) => {
           const updated = [...prev];
-          updated[reelIndex] = Array.from({ length: 5 }, getRandomSymbol);
+          updated[reelIndex] = newSymbols;
           return updated;
         });
+
         if (count > 20 + reelIndex * 10) {
           clearInterval(interval);
-          if (reelIndex === 2) {
-            setTimeout(() => {
-              calculateScore();
-              setTurn(prev => prev + 1);
-              setIsSpinning(false);
-            }, 200);
+          completedReels++;
+          if (completedReels === 3) {
+            // aggiorna punti
+            let newPoints = 0;
+            for (let r = 0; r < 3; r++) {
+              if (tempSymbols[r][1] === bonusSymbol) newPoints += 10;
+            }
+            setScore(prev => prev + newPoints);
+            setTurnsLeft(prev => prev - 1);
+            setTimeout(() => setIsSpinning(false), 300);
           }
         }
       }, 60);
@@ -67,15 +63,11 @@ export default function AiSlot() {
     }
   };
 
-  const calculateScore = () => {
-    let points = 0;
-    resultSymbols.forEach(reel => {
-      reel.forEach(symbol => {
-        if (symbol === bonusSymbol) points += 10;
-      });
-    });
-    setScore(prev => prev + points);
-  };
+  useEffect(() => {
+    if (turnsLeft === 0) {
+      setTimeout(() => router.push('/dashboard'), 1500);
+    }
+  }, [turnsLeft, router]);
 
   const styles = {
     page: {
@@ -94,13 +86,12 @@ export default function AiSlot() {
       fontWeight: 1100,
       color: '#00FFFF',
       textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
-      marginBottom: '1.2rem'
+      marginBottom: '0.5rem'
     },
     bonus: {
       fontSize: '1rem',
       marginBottom: '1rem',
-      fontWeight: 'bold' as const,
-      color: '#00FFAA'
+      color: '#0ff'
     },
     slotContainer: {
       display: 'flex',
@@ -145,8 +136,8 @@ export default function AiSlot() {
       boxShadow: '0 4px 0 #c33d00',
     },
     score: {
-      fontSize: '1.1rem',
       marginTop: '1rem',
+      fontSize: '1.2rem',
       color: '#FFD700',
     }
   };
@@ -155,6 +146,7 @@ export default function AiSlot() {
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
       {bonusSymbol && <div style={styles.bonus}>🎯 Bonus selezionato: {bonusSymbol.toUpperCase()}</div>}
+
       <div style={styles.slotContainer}>
         {resultSymbols.map((reel, i) => (
           <div key={i} style={styles.reel}>
@@ -174,7 +166,9 @@ export default function AiSlot() {
           </div>
         ))}
       </div>
-      <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
+
+      <div style={styles.score}>🎯 Punti: {score} | Giri rimasti: {turnsLeft}</div>
+
       <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
         🎰 Gira
       </button>
