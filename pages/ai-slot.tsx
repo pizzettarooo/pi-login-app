@@ -68,7 +68,7 @@ export default function AiSlot() {
     column: {
       display: 'flex',
       flexDirection: 'column' as const,
-      gap: '10px'
+      gap: '10px',
     },
     cell: {
       backgroundColor: '#121212',
@@ -77,10 +77,10 @@ export default function AiSlot() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      width: '100px',
+      height: '100px',
       boxShadow: 'inset 0 0 5px #00000099',
       transition: 'transform 0.2s ease',
-      width: '100px',
-      height: '100px'
     },
     spinButton: {
       marginTop: '2rem',
@@ -101,10 +101,10 @@ export default function AiSlot() {
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
 
       <div style={styles.slotGrid}>
-        {columns.map((col, colIndex) => (
-          <div key={colIndex} style={styles.column}>
-            {col.map((symbol, rowIndex) => (
-              <div key={`${colIndex}-${rowIndex}`} style={styles.cell}>
+        {columns.map((column, columnIndex) => (
+          <div key={columnIndex} style={styles.column}>
+            {column.map((symbol, rowIndex) => (
+              <div key={`${columnIndex}-${rowIndex}`} style={styles.cell}>
                 {symbol && (
                   <Image
                     src={symbol}
