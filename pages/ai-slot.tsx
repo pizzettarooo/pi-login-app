@@ -1,102 +1,108 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 
 const symbols = [
-  'arancia.png',
-  'banana.png',
-  'bar.png',
-  'campana.png',
-  'ciliegia.png',
-  'dollaro.png',
-  'formaggio.png',
-  'fragola.png',
-  'gemma.png',
-  'interrogativo.png',
-  'melone.png',
-  'prugna.png',
-  'sette.png',
-  'slot.png',
-  'stella.png',
-  'uva.png',
-  'wild.png',
+  'arancia', 'banana', 'bar', 'ciliegia', 'dollaro',
+  'formaggio', 'fragola', 'gemma', 'interrogativo',
+  'melone', 'prugna', 'sette', 'stella', 'trisette', 'uva', 'wild'
 ];
 
-export default function AiSlot() {
-  const getRandomSymbol = () => symbols[Math.floor(Math.random() * symbols.length)];
+const getRandomSymbol = () => {
+  const index = Math.floor(Math.random() * symbols.length);
+  return `/slot-symbols/${symbols[index]}.png`;
+};
 
-  const [grid, setGrid] = useState(
-    Array.from({ length: 9 }, () => getRandomSymbol())
-  );
+export default function AiSlot() {
+  const [grid, setGrid] = useState([
+    ['', '', ''],
+    ['', '', ''],
+    ['', '', '']
+  ]);
 
   const spin = () => {
-    const newGrid = Array.from({ length: 9 }, () => getRandomSymbol());
+    const newGrid = Array.from({ length: 3 }, () =>
+      Array.from({ length: 3 }, () => getRandomSymbol())
+    );
     setGrid(newGrid);
   };
 
+  const styles = {
+    page: {
+      minHeight: '100vh',
+      background: 'linear-gradient(to bottom right, #002B36, #001F2B)',
+      color: 'white',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem'
+    },
+    title: {
+      fontSize: '2rem',
+      marginBottom: '1.5rem',
+      fontWeight: 'bold' as const,
+      color: '#00FFFF'
+    },
+    slotGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 100px)',
+      gridTemplateRows: 'repeat(3, 100px)',
+      gap: '10px',
+      padding: '1.5rem',
+      borderRadius: '30px',
+      background: 'linear-gradient(145deg, #4b0082, #2c003e)',
+      boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
+      border: '6px solid #8a2be2',
+      position: 'relative' as const,
+    },
+    cell: {
+      backgroundColor: '#121212',
+      border: '2px solid #ffffff55',
+      borderRadius: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: 'inset 0 0 5px #00000099',
+      transition: 'transform 0.2s ease',
+    },
+    spinButton: {
+      marginTop: '2rem',
+      padding: '0.75rem 1.5rem',
+      fontSize: '1rem',
+      fontWeight: 'bold' as const,
+      color: '#fff',
+      backgroundColor: '#FF4500',
+      border: 'none',
+      borderRadius: '12px',
+      cursor: 'pointer',
+      boxShadow: '0 4px 0 #c33d00',
+    }
+  };
+
   return (
-    <div style={styles.wrapper}>
+    <div style={styles.page}>
       <h1 style={styles.title}>Modalità AI Test Slot</h1>
 
       <div style={styles.slotGrid}>
-        {grid.map((symbol, index) => (
-          <div key={index} style={styles.cell}>
-            <img src={`/slot-symbols/${symbol}`} alt={`symbol-${index}`} style={styles.img} />
-          </div>
-        ))}
+        {grid.map((row, rowIndex) =>
+          row.map((symbol, colIndex) => (
+            <div key={`${rowIndex}-${colIndex}`} style={styles.cell}>
+              {symbol && (
+                <Image
+                  src={symbol}
+                  alt="symbol"
+                  width={60}
+                  height={60}
+                />
+              )}
+            </div>
+          ))
+        )}
       </div>
 
-      <button style={styles.button} onClick={spin}>
+      <button style={styles.spinButton} onClick={spin}>
         🎰 Gira
       </button>
     </div>
   );
 }
-
-const styles: { [key: string]: React.CSSProperties } = {
-  wrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    background: 'radial-gradient(circle, #0f172a, #0a0f1a)',
-    minHeight: '100vh',
-    padding: '2rem',
-    color: 'white',
-  },
-  title: {
-    fontSize: '2rem',
-    marginBottom: '1.5rem',
-  },
-  slotGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 100px)',
-    gridTemplateRows: 'repeat(3, 100px)',
-    gap: '10px',
-    background: '#1e1e2f',
-    padding: '1rem',
-    borderRadius: '20px',
-    boxShadow: '0 0 20px rgba(0,0,0,0.5)',
-  },
-  cell: {
-    backgroundColor: '#00000033',
-    border: '2px solid white',
-    borderRadius: '12px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  img: {
-    maxWidth: '70%',
-    maxHeight: '70%',
-  },
-  button: {
-    marginTop: '2rem',
-    padding: '1rem 2rem',
-    fontSize: '1.2rem',
-    background: '#f97316',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '12px',
-    boxShadow: '0 4px #c2410c',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-};
