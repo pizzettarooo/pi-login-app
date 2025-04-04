@@ -32,18 +32,18 @@ export default function AiSlot() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: '2rem',
+        paddingBottom: '3rem',
       }}
     >
-      <h1 style={{ color: '#00fbe2', fontSize: '1.8rem', marginBottom: '1rem' }}>
+      <h1 style={{ color: '#00fbe2', fontSize: '2rem', marginBottom: '2rem' }}>
         MODALITÀ AI TEST SLOT
       </h1>
 
       <div
         style={{
           position: 'relative',
-          width: 400,
-          height: 330, // ← slot più alta rispetto ai soliti 300px
+          width: 500,   // ⬅️ Ingrandita rispetto a prima
+          height: 420,  // ⬅️ Ingrandita in altezza
         }}
       >
         <img
@@ -59,14 +59,14 @@ export default function AiSlot() {
         <div
           style={{
             position: 'absolute',
-            top: '17%',
-            left: '12.3%',
+            top: '17.5%',
+            left: '12.5%',
             width: '75%',
             height: '67%',
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gridTemplateRows: 'repeat(3, 1fr)',
-            gap: '10px',
+            gap: '12px',
             padding: '5px',
           }}
         >
@@ -83,7 +83,7 @@ export default function AiSlot() {
                 <img
                   src={`/slot-symbols/${symbol}.png`}
                   alt={symbol}
-                  style={{ width: 40, height: 40 }}
+                  style={{ width: 55, height: 55 }}
                 />
               </div>
             ))
@@ -94,15 +94,15 @@ export default function AiSlot() {
       <button
         onClick={() => setGrid(generateGrid())}
         style={{
-          marginTop: '2rem',
-          padding: '0.8rem 1.6rem',
-          fontSize: '1rem',
-          borderRadius: '12px',
+          marginTop: '2.5rem',
+          padding: '0.9rem 1.8rem',
+          fontSize: '1.1rem',
+          borderRadius: '14px',
           backgroundColor: '#ff4500',
           color: 'white',
           border: 'none',
           cursor: 'pointer',
-          boxShadow: '0 0 10px rgba(0,0,0,0.3)',
+          boxShadow: '0 0 12px rgba(0,0,0,0.3)',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
