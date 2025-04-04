@@ -21,6 +21,8 @@ export default function AiSlot() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [turn, setTurn] = useState(0);
   const [score, setScore] = useState(0);
+  const [bonusHits, setBonusHits] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
     const savedBonus = localStorage.getItem('bonusSymbol');
@@ -34,7 +36,7 @@ export default function AiSlot() {
   useEffect(() => {
     if (turn >= 10) {
       localStorage.removeItem('bonusSymbol');
-      setTimeout(() => router.push('/dashboard'), 1000);
+      setTimeout(() => setShowSummary(true), 800);
     }
   }, [turn]);
 
@@ -69,12 +71,17 @@ export default function AiSlot() {
 
   const calculateScore = () => {
     let points = 0;
+    let hits = 0;
     resultSymbols.forEach(reel => {
       reel.forEach(symbol => {
-        if (symbol === bonusSymbol) points += 10;
+        if (symbol === bonusSymbol) {
+          points += 10;
+          hits++;
+        }
       });
     });
     setScore(prev => prev + points);
+    setBonusHits(prev => prev + hits);
   };
 
   const styles = {
@@ -148,6 +155,24 @@ export default function AiSlot() {
       fontSize: '1.1rem',
       marginTop: '1rem',
       color: '#FFD700',
+    },
+    summaryBox: {
+      marginTop: '2rem',
+      padding: '1.5rem',
+      backgroundColor: '#1a1a1a',
+      borderRadius: '16px',
+      border: '2px solid #00FFFF',
+      textAlign: 'center' as const
+    },
+    dashboardButton: {
+      marginTop: '1rem',
+      padding: '0.5rem 1.2rem',
+      fontSize: '1rem',
+      backgroundColor: '#00CED1',
+      border: 'none',
+      borderRadius: '8px',
+      color: '#000',
+      cursor: 'pointer'
     }
   };
 
@@ -155,29 +180,43 @@ export default function AiSlot() {
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
       {bonusSymbol && <div style={styles.bonus}>🎯 Bonus selezionato: {bonusSymbol.toUpperCase()}</div>}
-      <div style={styles.slotContainer}>
-        {resultSymbols.map((reel, i) => (
-          <div key={i} style={styles.reel}>
-            <div style={styles.reelInner}>
-              {reel.map((symbol, j) => (
-                <div key={j} style={styles.symbolBox}>
-                  <Image
-                    src={`/slot-symbols/${symbol}.png`}
-                    alt={symbol}
-                    width={140}
-                    height={140}
-                    style={{ objectFit: 'contain' }}
-                  />
+      {!showSummary && (
+        <>
+          <div style={styles.slotContainer}>
+            {resultSymbols.map((reel, i) => (
+              <div key={i} style={styles.reel}>
+                <div style={styles.reelInner}>
+                  {reel.map((symbol, j) => (
+                    <div key={j} style={styles.symbolBox}>
+                      <Image
+                        src={`/slot-symbols/${symbol}.png`}
+                        alt={symbol}
+                        width={140}
+                        height={140}
+                        style={{ objectFit: 'contain' }}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
-      <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
-        🎰 Gira
-      </button>
+          <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
+          <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
+            🎰 Gira
+          </button>
+        </>
+      )}
+      {showSummary && (
+        <div style={styles.summaryBox}>
+          <h2>🎉 Partita conclusa!</h2>
+          <p>Punti totali: {score}</p>
+          <p>{bonusSymbol?.toUpperCase()} trovato {bonusHits} volte</p>
+          <button style={styles.dashboardButton} onClick={() => router.push('/dashboard')}>
+            Torna alla Dashboard
+          </button>
+        </div>
+      )}
     </div>
   );
 }
