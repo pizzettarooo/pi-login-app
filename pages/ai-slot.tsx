@@ -1,52 +1,111 @@
-import { useState } from "react";
+import React, { useState } from 'react';
+import Image from 'next/image';
 
 const symbols = [
-  "arancia", "banana", "bar", "campana", "ciliegia", "dollaro", "formaggio", "fragola",
-  "gemma", "interrogativo", "melone", "prugna", "sette", "stella", "trisette", "uva", "wild"
+  'arancia', 'banana', 'bar', 'ciliegia', 'dollaro',
+  'formaggio', 'fragola', 'gemma', 'interrogativo',
+  'melone', 'prugna', 'sette', 'stella', 'trisette', 'uva', 'wild'
 ];
 
-export default function AiSlot() {
-  const [slots, setSlots] = useState(generateSlots());
+const getRandomSymbol = () => {
+  const index = Math.floor(Math.random() * symbols.length);
+  return `/slot-symbols/${symbols[index]}.png`;
+};
 
-  function generateSlots() {
-    const getRandom = () => symbols[Math.floor(Math.random() * symbols.length)];
-    return Array.from({ length: 3 }, () =>
-      Array.from({ length: 3 }, getRandom)
-    );
-  }
+export default function AiSlot() {
+  const [grid, setGrid] = useState([
+    ['', '', ''],
+    ['', '', ''],
+    ['', '', '']
+  ]);
 
   const spin = () => {
-    setSlots(generateSlots());
+    const newGrid = Array.from({ length: 3 }, () =>
+      Array.from({ length: 3 }, () => getRandomSymbol())
+    );
+    setGrid(newGrid);
+  };
+
+  const styles = {
+    page: {
+      minHeight: '100vh',
+      background: 'linear-gradient(to bottom right, #002B36, #001F2B)',
+      color: 'white',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem'
+    },
+    title: {
+      fontSize: '2.5rem',
+      marginBottom: '1rem',
+      fontWeight: 'bold' as const,
+      color: '#00FFFF',
+      textShadow: '0 0 8px #00FFFF',
+      position: 'relative' as const,
+      top: '10px',
+      zIndex: 2
+    },
+    slotGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 100px)',
+      gridTemplateRows: 'repeat(3, 100px)',
+      gap: '10px',
+      padding: '1.5rem',
+      borderRadius: '30px',
+      background: 'linear-gradient(145deg, #4b0082, #2c003e)',
+      boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
+      border: '6px solid #8a2be2',
+      position: 'relative' as const,
+    },
+    cell: {
+      backgroundColor: '#121212',
+      border: '2px solid #ffffff55',
+      borderRadius: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: 'inset 0 0 5px #00000099',
+      transition: 'transform 0.2s ease',
+    },
+    spinButton: {
+      marginTop: '2rem',
+      padding: '0.75rem 1.5rem',
+      fontSize: '1rem',
+      fontWeight: 'bold' as const,
+      color: '#fff',
+      backgroundColor: '#FF4500',
+      border: 'none',
+      borderRadius: '12px',
+      cursor: 'pointer',
+      boxShadow: '0 4px 0 #c33d00',
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#03202f] to-[#01151f] flex flex-col items-center justify-center px-4">
-      <h1 className="text-4xl sm:text-5xl font-extrabold text-cyan-300 drop-shadow-[0_0_5px_#00ffff] mb-6">
-        LoveOnPi <span className="text-white">AI Slot</span>
-      </h1>
+    <div style={styles.page}>
+      <h1 style={styles.title}>LoveOnPi AI Slot</h1>
 
-      <div className="bg-[#111827] p-6 rounded-[2rem] border-[5px] border-violet-700 shadow-[0_0_30px_#7c3aed]">
-        <div className="grid grid-cols-3 grid-rows-3 gap-4 bg-[#1f2937] p-6 rounded-2xl">
-          {slots.flat().map((symbol, index) => (
-            <div
-              key={index}
-              className="w-20 h-20 sm:w-24 sm:h-24 bg-[#111] border-[3px] border-white/20 rounded-xl flex items-center justify-center shadow-inner"
-            >
-              <img
-                src={`/slot-symbols/${symbol}.png`}
-                alt={symbol}
-                className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
-              />
+      <div style={styles.slotGrid}>
+        {grid.map((row, rowIndex) =>
+          row.map((symbol, colIndex) => (
+            <div key={`${rowIndex}-${colIndex}`} style={styles.cell}>
+              {symbol && (
+                <Image
+                  src={symbol}
+                  alt="symbol"
+                  width={60}
+                  height={60}
+                />
+              )}
             </div>
-          ))}
-        </div>
+          ))
+        )}
       </div>
 
-      <button
-        onClick={spin}
-        className="mt-8 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 flex items-center gap-2"
-      >
-        <span role="img" aria-label="slot">🎰</span> Gira
+      <button style={styles.spinButton} onClick={spin}>
+        🎰 Gira
       </button>
     </div>
   );
