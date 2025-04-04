@@ -49,11 +49,11 @@ export default function AiSlot() {
     },
     title: {
       fontFamily: 'Orbitron',
-      fontSize: '2.8rem', // leggermente più grande
+      fontSize: '2.5rem',
       marginBottom: '1.5rem',
-      fontWeight: 1000 as const, // aumentato lo spessore
+      fontWeight: 1100 as const,
       color: '#00FFFF',
-      textShadow: '0 0 10px #0ff, 0 0 20px #0ff',
+      textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
     },
     slotGrid: {
       display: 'grid',
