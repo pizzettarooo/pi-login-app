@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import '@fontsource/orbitron';
+import '@fontsource/orbitron/900.css';
 
 const symbols = [
   'arancia', 'banana', 'bar', 'ciliegia', 'dollaro',
@@ -19,12 +19,26 @@ export default function AiSlot() {
     ['', '', ''],
     ['', '', '']
   ]);
+  const [spinning, setSpinning] = useState(false);
 
   const spin = () => {
-    const newGrid = Array.from({ length: 3 }, () =>
-      Array.from({ length: 3 }, () => getRandomSymbol())
-    );
-    setGrid(newGrid);
+    setSpinning(true);
+
+    let spinInterval = setInterval(() => {
+      const spinningGrid = Array.from({ length: 3 }, () =>
+        Array.from({ length: 3 }, () => getRandomSymbol())
+      );
+      setGrid(spinningGrid);
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(spinInterval);
+      const finalGrid = Array.from({ length: 3 }, () =>
+        Array.from({ length: 3 }, () => getRandomSymbol())
+      );
+      setGrid(finalGrid);
+      setSpinning(false);
+    }, 1200);
   };
 
   const styles = {
@@ -39,12 +53,12 @@ export default function AiSlot() {
       padding: '2rem'
     },
     title: {
-      fontSize: '3rem',
-      marginBottom: '2rem',
-      fontWeight: '900' as const,
-      color: '#00FFFF',
       fontFamily: 'Orbitron',
-      textShadow: '0 0 15px #00FFFF',
+      fontSize: '2.5rem',
+      marginBottom: '2rem',
+      fontWeight: 900 as const,
+      color: '#00FFFF',
+      textShadow: '0 0 10px #00FFFF',
     },
     slotGrid: {
       display: 'grid',
@@ -103,7 +117,7 @@ export default function AiSlot() {
         )}
       </div>
 
-      <button style={styles.spinButton} onClick={spin}>
+      <button style={styles.spinButton} onClick={spin} disabled={spinning}>
         🎰 Gira
       </button>
     </div>
