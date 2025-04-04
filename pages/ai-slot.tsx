@@ -51,7 +51,7 @@ export default function AiSlot() {
       fontFamily: 'Orbitron',
       fontSize: '2.5rem',
       marginBottom: '1.5rem',
-      fontWeight: 1100 as const,
+      fontWeight: 1100,
       color: '#00FFFF',
       textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
     },
