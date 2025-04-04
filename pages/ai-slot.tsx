@@ -1,97 +1,56 @@
-import { useState, useEffect } from "react";
+'use client';
 
-const symbolNames = [
-  "arancia", "banana", "bar", "campana", "campana2", "ciliegia", "dollaro",
-  "formaggio", "fragola", "gemma", "gemma2", "interrogativo", "melone", "prugna",
-  "sette", "stella", "stella2", "trisette", "uva", "wild"
+import Image from 'next/image';
+import { useState } from 'react';
+
+const symbols = [
+  'arancia', 'banana', 'bar', 'campana', 'ciliegia', 'dollaro', 'formaggio',
+  'fragola', 'gemma', 'gemma2', 'interrogativo', 'melone', 'prugna', 'sette',
+  'stella', 'stella2', 'trisette', 'uva', 'wild'
 ];
 
-const getRandomSymbol = () => {
-  const index = Math.floor(Math.random() * symbolNames.length);
-  return `/slot-symbols/${symbolNames[index]}.png`;
-};
+const getRandomSymbol = () => symbols[Math.floor(Math.random() * symbols.length)];
 
 export default function AiSlot() {
-  const [slots, setSlots] = useState<string[][]>([]);
+  const [grid, setGrid] = useState<string[][]>([
+    ['', '', ''],
+    ['', '', ''],
+    ['', '', '']
+  ]);
 
-  const spin = () => {
+  const handleSpin = () => {
     const newGrid = Array.from({ length: 3 }, () =>
       Array.from({ length: 3 }, () => getRandomSymbol())
     );
-    setSlots(newGrid);
+    setGrid(newGrid);
   };
 
-  useEffect(() => {
-    spin(); // inizializza alla prima apertura
-  }, []);
-
   return (
-    <div
-      style={{
-        background: "linear-gradient(to bottom right, #00354d, #01222d)",
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flexDirection: "column",
-        paddingTop: "40px"
-      }}
-    >
-      <h1 style={{ color: "#00f7ff", marginBottom: "20px" }}>
-        MODALITÀ AI TEST SLOT
-      </h1>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#022C43] to-[#053F5E] text-white">
+      <h1 className="text-3xl font-bold text-cyan-300 mb-8">MODALITÀ AI TEST SLOT</h1>
 
-      <div
-        style={{
-          backgroundImage: "url('/slot-symbols/slot.png')",
-          backgroundSize: "contain",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center",
-          width: "450px",
-          height: "500px",
-          position: "relative",
-        }}
-      >
-        {/* GRID */}
-        <div
-          style={{
-            position: "absolute",
-            top: "123px",
-            left: "52px",
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 80px)",
-            gridTemplateRows: "repeat(3, 80px)",
-            gap: "10px",
-          }}
-        >
-          {slots.flat().map((symbol, i) => (
-            <img
-              key={i}
-              src={symbol}
-              alt="symbol"
-              style={{ width: "80px", height: "80px" }}
-            />
+      <div className="relative w-[320px] h-[320px]">
+        <Image src="/slot-symbols/slot.png" alt="Slot Machine" fill className="object-contain" />
+
+        <div className="absolute top-[42px] left-[42px] w-[234px] h-[234px] grid grid-cols-3 grid-rows-3 gap-[1px]">
+          {grid.flat().map((symbol, i) => (
+            <div key={i} className="flex items-center justify-center">
+              {symbol && (
+                <Image
+                  src={`/slot-symbols/${symbol}.png`}
+                  alt={symbol}
+                  width={50}
+                  height={50}
+                />
+              )}
+            </div>
           ))}
         </div>
       </div>
 
       <button
-        onClick={spin}
-        style={{
-          marginTop: "30px",
-          backgroundColor: "#ff3300",
-          border: "none",
-          borderRadius: "12px",
-          padding: "12px 24px",
-          color: "#fff",
-          fontSize: "18px",
-          fontWeight: "bold",
-          cursor: "pointer",
-          boxShadow: "0 0 10px #000",
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-        }}
+        onClick={handleSpin}
+        className="mt-10 px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg flex items-center gap-2"
       >
         <span role="img" aria-label="slot">🎰</span> Gira
       </button>
