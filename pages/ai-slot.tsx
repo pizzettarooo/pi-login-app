@@ -14,7 +14,7 @@ const getRandomSymbol = () => {
 };
 
 export default function AiSlot() {
-  const [grid, setGrid] = useState([
+  const [columns, setColumns] = useState([
     ['', '', ''],
     ['', '', ''],
     ['', '', '']
@@ -26,12 +26,12 @@ export default function AiSlot() {
     if (spinning) return;
     setSpinning(true);
 
-    const newGrid = Array.from({ length: 3 }, () =>
+    const newColumns = Array.from({ length: 3 }, () =>
       Array.from({ length: 3 }, () => getRandomSymbol())
     );
 
     setTimeout(() => {
-      setGrid(newGrid);
+      setColumns(newColumns);
       setSpinning(false);
     }, 1200);
   };
@@ -55,7 +55,7 @@ export default function AiSlot() {
       color: '#00FFFF',
       textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
     },
-    slotWrapper: {
+    slotGrid: {
       display: 'flex',
       gap: '10px',
       padding: '1.5rem',
@@ -63,15 +63,14 @@ export default function AiSlot() {
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
       boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
       border: '6px solid #8a2be2',
+      position: 'relative' as const,
     },
-    reel: {
+    column: {
       display: 'flex',
       flexDirection: 'column' as const,
-      gap: '10px',
+      gap: '10px'
     },
     cell: {
-      width: '100px',
-      height: '100px',
       backgroundColor: '#121212',
       border: '2px solid #ffffff55',
       borderRadius: '16px',
@@ -80,6 +79,8 @@ export default function AiSlot() {
       justifyContent: 'center',
       boxShadow: 'inset 0 0 5px #00000099',
       transition: 'transform 0.2s ease',
+      width: '100px',
+      height: '100px'
     },
     spinButton: {
       marginTop: '2rem',
@@ -99,14 +100,14 @@ export default function AiSlot() {
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
 
-      <div style={styles.slotWrapper}>
-        {Array.from({ length: 3 }, (_, colIndex) => (
-          <div key={colIndex} style={styles.reel}>
-            {Array.from({ length: 3 }, (_, rowIndex) => (
-              <div key={`${rowIndex}-${colIndex}`} style={styles.cell}>
-                {grid[rowIndex][colIndex] && (
+      <div style={styles.slotGrid}>
+        {columns.map((col, colIndex) => (
+          <div key={colIndex} style={styles.column}>
+            {col.map((symbol, rowIndex) => (
+              <div key={`${colIndex}-${rowIndex}`} style={styles.cell}>
+                {symbol && (
                   <Image
-                    src={grid[rowIndex][colIndex]}
+                    src={symbol}
                     alt="symbol"
                     width={140}
                     height={140}
