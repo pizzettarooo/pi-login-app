@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+""import React, { useState } from 'react';
 import Image from 'next/image';
 import '@fontsource/orbitron';
 
@@ -14,7 +14,7 @@ const getRandomSymbol = () => {
 };
 
 export default function AiSlot() {
-  const [grid, setGrid] = useState([
+  const [reels, setReels] = useState([
     ['', '', ''],
     ['', '', ''],
     ['', '', '']
@@ -26,12 +26,12 @@ export default function AiSlot() {
     if (spinning) return;
     setSpinning(true);
 
-    const newGrid = Array.from({ length: 3 }, () =>
+    const newReels = Array.from({ length: 3 }, () =>
       Array.from({ length: 3 }, () => getRandomSymbol())
     );
 
     setTimeout(() => {
-      setGrid(newGrid);
+      setReels(newReels);
       setSpinning(false);
     }, 1200);
   };
@@ -50,22 +50,24 @@ export default function AiSlot() {
     title: {
       fontFamily: 'Orbitron',
       fontSize: '2.5rem',
-      marginBottom: '1.5rem',
       fontWeight: 1100,
+      marginBottom: '1.5rem',
       color: '#00FFFF',
-      textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
+      textShadow: '0 0 8px #0ff, 0 0 16px #0ff'
     },
-    slotGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 100px)',
-      gridTemplateRows: 'repeat(3, 100px)',
-      gap: '10px',
+    slotWrapper: {
+      display: 'flex',
+      gap: '14px',
       padding: '1.5rem',
       borderRadius: '30px',
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
       boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
-      border: '6px solid #8a2be2',
-      position: 'relative' as const,
+      border: '6px solid #8a2be2'
+    },
+    reel: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: '10px'
     },
     cell: {
       backgroundColor: '#121212',
@@ -74,8 +76,9 @@ export default function AiSlot() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: 'inset 0 0 5px #00000099',
-      transition: 'transform 0.2s ease',
+      width: '100px',
+      height: '100px',
+      boxShadow: 'inset 0 0 5px #00000099'
     },
     spinButton: {
       marginTop: '2rem',
@@ -87,7 +90,7 @@ export default function AiSlot() {
       border: 'none',
       borderRadius: '12px',
       cursor: 'pointer',
-      boxShadow: '0 4px 0 #c33d00',
+      boxShadow: '0 4px 0 #c33d00'
     }
   };
 
@@ -95,22 +98,24 @@ export default function AiSlot() {
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
 
-      <div style={styles.slotGrid}>
-        {grid.map((row, rowIndex) =>
-          row.map((symbol, colIndex) => (
-            <div key={`${rowIndex}-${colIndex}`} style={styles.cell}>
-              {symbol && (
-                <Image
-                  src={symbol}
-                  alt="symbol"
-                  width={140}
-                  height={140}
-                  style={{ objectFit: 'contain' }}
-                />
-              )}
-            </div>
-          ))
-        )}
+      <div style={styles.slotWrapper}>
+        {reels.map((reel, reelIndex) => (
+          <div key={reelIndex} style={styles.reel}>
+            {reel.map((symbol, symbolIndex) => (
+              <div key={symbolIndex} style={styles.cell}>
+                {symbol && (
+                  <Image
+                    src={symbol}
+                    alt="symbol"
+                    width={100}
+                    height={100}
+                    style={{ objectFit: 'contain' }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
 
       <button style={styles.spinButton} onClick={spin} disabled={spinning}>
