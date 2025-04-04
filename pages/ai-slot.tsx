@@ -55,19 +55,23 @@ export default function AiSlot() {
       color: '#00FFFF',
       textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
     },
-    slotGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 100px)',
-      gridTemplateRows: 'repeat(3, 100px)',
+    slotWrapper: {
+      display: 'flex',
       gap: '10px',
       padding: '1.5rem',
       borderRadius: '30px',
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
       boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
       border: '6px solid #8a2be2',
-      position: 'relative' as const,
+    },
+    reel: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: '10px',
     },
     cell: {
+      width: '100px',
+      height: '100px',
       backgroundColor: '#121212',
       border: '2px solid #ffffff55',
       borderRadius: '16px',
@@ -95,22 +99,24 @@ export default function AiSlot() {
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
 
-      <div style={styles.slotGrid}>
-        {grid.map((row, rowIndex) =>
-          row.map((symbol, colIndex) => (
-            <div key={`${rowIndex}-${colIndex}`} style={styles.cell}>
-              {symbol && (
-                <Image
-                  src={symbol}
-                  alt="symbol"
-                  width={140}
-                  height={140}
-                  style={{ objectFit: 'contain' }}
-                />
-              )}
-            </div>
-          ))
-        )}
+      <div style={styles.slotWrapper}>
+        {Array.from({ length: 3 }, (_, colIndex) => (
+          <div key={colIndex} style={styles.reel}>
+            {Array.from({ length: 3 }, (_, rowIndex) => (
+              <div key={`${rowIndex}-${colIndex}`} style={styles.cell}>
+                {grid[rowIndex][colIndex] && (
+                  <Image
+                    src={grid[rowIndex][colIndex]}
+                    alt="symbol"
+                    width={140}
+                    height={140}
+                    style={{ objectFit: 'contain' }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
 
       <button style={styles.spinButton} onClick={spin} disabled={spinning}>
