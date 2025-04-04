@@ -1,98 +1,115 @@
 import React, { useState } from 'react';
-import Image from 'next/image';
-import path from 'path';
 
 const symbols = [
-  'arancia', 'banana', 'bar', 'campana', 'ciliegia', 'dollaro', 'formaggio',
-  'fragola', 'gemma', 'interrogativo', 'melone', 'prugna', 'sette', 'stella',
-  'trisette', 'uva', 'wild'
+  'arancia', 'banana', 'bar', 'campana', 'ciliegia',
+  'dollaro', 'formaggio', 'fragola', 'gemma', 'interrogativo',
+  'melone', 'prugna', 'sette', 'stella', 'trisette',
+  'uva', 'wild'
 ];
 
-function getRandomSymbol() {
-  const index = Math.floor(Math.random() * symbols.length);
-  return `/slot-symbols/${symbols[index]}.png`;
-}
+export default function AiSlot() {
+  const [grid, setGrid] = useState(generateGrid());
 
-const AiSlot = () => {
-  const [grid, setGrid] = useState([
-    ['', '', ''],
-    ['', '', ''],
-    ['', '', ''],
-  ]);
-
-  const handleSpin = () => {
-    const newGrid = Array.from({ length: 3 }, () =>
-      Array.from({ length: 3 }, getRandomSymbol)
-    );
-    setGrid(newGrid);
-  };
+  function generateGrid() {
+    const newGrid = [];
+    for (let i = 0; i < 3; i++) {
+      const row = [];
+      for (let j = 0; j < 3; j++) {
+        const random = symbols[Math.floor(Math.random() * symbols.length)];
+        row.push(random);
+      }
+      newGrid.push(row);
+    }
+    return newGrid;
+  }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(to bottom right, #023047, #001219)',
-      color: '#00FFFF',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: 'sans-serif'
-    }}>
-      <h1 style={{ marginBottom: '20px', fontSize: '28px' }}>MODALITÀ AI TEST SLOT</h1>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #002f3e, #003b4f)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingBottom: '2rem',
+      }}
+    >
+      <h1 style={{ color: '#00fbe2', fontSize: '1.8rem', marginBottom: '1rem' }}>
+        MODALITÀ AI TEST SLOT
+      </h1>
 
-      <div style={{ position: 'relative' }}>
-        <Image
+      <div
+        style={{
+          position: 'relative',
+          width: 400,
+          height: 330, // ← slot più alta rispetto ai soliti 300px
+        }}
+      >
+        <img
           src="/slot-symbols/slot.png"
-          alt="Slot Machine"
-          width={500}
-          height={500}
+          alt="Slot Background"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+          }}
         />
 
-        <div style={{
-          position: 'absolute',
-          top: '90px',
-          left: '92px',
-          width: '315px',
-          height: '270px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gridTemplateRows: 'repeat(3, 1fr)',
-          gap: '10px',
-        }}>
-          {grid.flat().map((symbol, index) => (
-            <div key={index} style={{ width: '80px', height: '80px' }}>
-              {symbol && (
-                <Image
-                  src={symbol}
-                  alt="symbol"
-                  width={80}
-                  height={80}
+        <div
+          style={{
+            position: 'absolute',
+            top: '17%',
+            left: '12.3%',
+            width: '75%',
+            height: '67%',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: 'repeat(3, 1fr)',
+            gap: '10px',
+            padding: '5px',
+          }}
+        >
+          {grid.map((row, rowIndex) =>
+            row.map((symbol, colIndex) => (
+              <div
+                key={`${rowIndex}-${colIndex}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <img
+                  src={`/slot-symbols/${symbol}.png`}
+                  alt={symbol}
+                  style={{ width: 40, height: 40 }}
                 />
-              )}
-            </div>
-          ))}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
       <button
-        onClick={handleSpin}
+        onClick={() => setGrid(generateGrid())}
         style={{
-          marginTop: '30px',
-          padding: '12px 30px',
-          fontSize: '18px',
-          borderRadius: '10px',
+          marginTop: '2rem',
+          padding: '0.8rem 1.6rem',
+          fontSize: '1rem',
+          borderRadius: '12px',
           backgroundColor: '#ff4500',
-          color: '#fff',
-          fontWeight: 'bold',
-          cursor: 'pointer',
+          color: 'white',
           border: 'none',
-          boxShadow: '0px 5px 15px rgba(0,0,0,0.3)'
+          cursor: 'pointer',
+          boxShadow: '0 0 10px rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
         }}
       >
         🎰 Gira
       </button>
     </div>
   );
-};
-
-export default AiSlot;
+}
