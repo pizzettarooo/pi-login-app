@@ -19,6 +19,8 @@ export default function AiSlot() {
   const [bonusSymbol, setBonusSymbol] = useState<string | null>(null);
   const [resultSymbols, setResultSymbols] = useState<string[][]>([[], [], []]);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [turn, setTurn] = useState(0);
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     const savedBonus = localStorage.getItem('bonusSymbol');
@@ -29,8 +31,15 @@ export default function AiSlot() {
     }
   }, []);
 
+  useEffect(() => {
+    if (turn >= 10) {
+      localStorage.removeItem('bonusSymbol');
+      setTimeout(() => router.push('/dashboard'), 1000);
+    }
+  }, [turn]);
+
   const spin = () => {
-    if (isSpinning) return;
+    if (isSpinning || turn >= 10 || !bonusSymbol) return;
     setIsSpinning(true);
     const intervals: NodeJS.Timeout[] = [];
 
@@ -46,12 +55,26 @@ export default function AiSlot() {
         if (count > 20 + reelIndex * 10) {
           clearInterval(interval);
           if (reelIndex === 2) {
-            setTimeout(() => setIsSpinning(false), 200);
+            setTimeout(() => {
+              calculateScore();
+              setTurn(prev => prev + 1);
+              setIsSpinning(false);
+            }, 200);
           }
         }
       }, 60);
       intervals.push(interval);
     }
+  };
+
+  const calculateScore = () => {
+    let points = 0;
+    resultSymbols.forEach(reel => {
+      reel.forEach(symbol => {
+        if (symbol === bonusSymbol) points += 10;
+      });
+    });
+    setScore(prev => prev + points);
   };
 
   const styles = {
@@ -120,6 +143,11 @@ export default function AiSlot() {
       borderRadius: '12px',
       cursor: 'pointer',
       boxShadow: '0 4px 0 #c33d00',
+    },
+    score: {
+      fontSize: '1.1rem',
+      marginTop: '1rem',
+      color: '#FFD700',
     }
   };
 
@@ -146,6 +174,7 @@ export default function AiSlot() {
           </div>
         ))}
       </div>
+      <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
       <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
         🎰 Gira
       </button>
