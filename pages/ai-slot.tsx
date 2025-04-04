@@ -14,41 +14,32 @@ const getRandomSymbol = () => {
 };
 
 export default function AiSlot() {
-  const [reels, setReels] = useState<string[][]>([[], [], []]);
   const [resultSymbols, setResultSymbols] = useState<string[][]>([[], [], []]);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [bonusSymbol, setBonusSymbol] = useState<string | null>(null);
-
-  useEffect(() => {
-    const storedBonus = localStorage.getItem('bonusSymbol');
-    if (storedBonus) setBonusSymbol(storedBonus);
-  }, []);
 
   const spin = () => {
-    if (isSpinning || !bonusSymbol) return;
+    if (isSpinning) return;
     setIsSpinning(true);
+    const intervals: NodeJS.Timeout[] = [];
 
-    let counter = 0;
-    const interval = setInterval(() => {
-      setReels([
-        Array.from({ length: 5 }, getRandomSymbol),
-        Array.from({ length: 5 }, getRandomSymbol),
-        Array.from({ length: 5 }, getRandomSymbol)
-      ]);
-
-      counter++;
-      if (counter > 15) {
-        clearInterval(interval);
-        const final = [
-          Array.from({ length: 5 }, getRandomSymbol),
-          Array.from({ length: 5 }, getRandomSymbol),
-          Array.from({ length: 5 }, getRandomSymbol)
-        ];
-        setReels(final);
-        setResultSymbols(final);
-        setIsSpinning(false);
-      }
-    }, 100);
+    for (let reelIndex = 0; reelIndex < 3; reelIndex++) {
+      let count = 0;
+      const interval = setInterval(() => {
+        count++;
+        setResultSymbols(prev => {
+          const updated = [...prev];
+          updated[reelIndex] = Array.from({ length: 5 }, getRandomSymbol);
+          return updated;
+        });
+        if (count > 20 + reelIndex * 10) {
+          clearInterval(interval);
+          if (reelIndex === 2) {
+            setTimeout(() => setIsSpinning(false), 200);
+          }
+        }
+      }, 60);
+      intervals.push(interval);
+    }
   };
 
   const styles = {
@@ -91,6 +82,7 @@ export default function AiSlot() {
     reelInner: {
       display: 'flex',
       flexDirection: 'column' as const,
+      transition: 'transform 0.2s ease-out',
     },
     symbolBox: {
       width: '100%',
@@ -110,21 +102,14 @@ export default function AiSlot() {
       borderRadius: '12px',
       cursor: 'pointer',
       boxShadow: '0 4px 0 #c33d00',
-    },
-    bonusText: {
-      fontSize: '1.2rem',
-      marginBottom: '1rem',
-      color: '#00ff88'
     }
   };
 
   return (
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
-      {bonusSymbol && <p style={styles.bonusText}>🎯 Bonus simbolo scelto: {bonusSymbol}</p>}
-
       <div style={styles.slotContainer}>
-        {reels.map((reel, i) => (
+        {resultSymbols.map((reel, i) => (
           <div key={i} style={styles.reel}>
             <div style={styles.reelInner}>
               {reel.map((symbol, j) => (
