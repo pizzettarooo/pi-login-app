@@ -1,46 +1,72 @@
-'use client';
-
+import React, { useState } from 'react';
 import Image from 'next/image';
-import { useState } from 'react';
+import path from 'path';
 
 const symbols = [
   'arancia', 'banana', 'bar', 'campana', 'ciliegia', 'dollaro', 'formaggio',
-  'fragola', 'gemma', 'gemma2', 'interrogativo', 'melone', 'prugna', 'sette',
-  'stella', 'stella2', 'trisette', 'uva', 'wild'
+  'fragola', 'gemma', 'interrogativo', 'melone', 'prugna', 'sette', 'stella',
+  'trisette', 'uva', 'wild'
 ];
 
-const getRandomSymbol = () => symbols[Math.floor(Math.random() * symbols.length)];
+function getRandomSymbol() {
+  const index = Math.floor(Math.random() * symbols.length);
+  return `/slot-symbols/${symbols[index]}.png`;
+}
 
-export default function AiSlot() {
-  const [grid, setGrid] = useState<string[][]>([
+const AiSlot = () => {
+  const [grid, setGrid] = useState([
     ['', '', ''],
     ['', '', ''],
-    ['', '', '']
+    ['', '', ''],
   ]);
 
   const handleSpin = () => {
     const newGrid = Array.from({ length: 3 }, () =>
-      Array.from({ length: 3 }, () => getRandomSymbol())
+      Array.from({ length: 3 }, getRandomSymbol)
     );
     setGrid(newGrid);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#022C43] to-[#053F5E] text-white">
-      <h1 className="text-3xl font-bold text-cyan-300 mb-8">MODALITÀ AI TEST SLOT</h1>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(to bottom right, #023047, #001219)',
+      color: '#00FFFF',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'sans-serif'
+    }}>
+      <h1 style={{ marginBottom: '20px', fontSize: '28px' }}>MODALITÀ AI TEST SLOT</h1>
 
-      <div className="relative w-[320px] h-[320px]">
-        <Image src="/slot-symbols/slot.png" alt="Slot Machine" fill className="object-contain" />
+      <div style={{ position: 'relative' }}>
+        <Image
+          src="/slot-symbols/slot.png"
+          alt="Slot Machine"
+          width={500}
+          height={500}
+        />
 
-        <div className="absolute top-[42px] left-[42px] w-[234px] h-[234px] grid grid-cols-3 grid-rows-3 gap-[1px]">
-          {grid.flat().map((symbol, i) => (
-            <div key={i} className="flex items-center justify-center">
+        <div style={{
+          position: 'absolute',
+          top: '90px',
+          left: '92px',
+          width: '315px',
+          height: '270px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateRows: 'repeat(3, 1fr)',
+          gap: '10px',
+        }}>
+          {grid.flat().map((symbol, index) => (
+            <div key={index} style={{ width: '80px', height: '80px' }}>
               {symbol && (
                 <Image
-                  src={`/slot-symbols/${symbol}.png`}
-                  alt={symbol}
-                  width={50}
-                  height={50}
+                  src={symbol}
+                  alt="symbol"
+                  width={80}
+                  height={80}
                 />
               )}
             </div>
@@ -50,10 +76,23 @@ export default function AiSlot() {
 
       <button
         onClick={handleSpin}
-        className="mt-10 px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg flex items-center gap-2"
+        style={{
+          marginTop: '30px',
+          padding: '12px 30px',
+          fontSize: '18px',
+          borderRadius: '10px',
+          backgroundColor: '#ff4500',
+          color: '#fff',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          border: 'none',
+          boxShadow: '0px 5px 15px rgba(0,0,0,0.3)'
+        }}
       >
-        <span role="img" aria-label="slot">🎰</span> Gira
+        🎰 Gira
       </button>
     </div>
   );
-}
+};
+
+export default AiSlot;
