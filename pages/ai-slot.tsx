@@ -8,37 +8,20 @@ const symbols = [
   'melone', 'prugna', 'sette', 'stella', 'trisette', 'uva', 'wild'
 ];
 
-const getRandomSymbol = () => {
-  const index = Math.floor(Math.random() * symbols.length);
-  return `/slot-symbols/${symbols[index]}.png`;
+const getRandomSymbols = () => {
+  const r = () => symbols[Math.floor(Math.random() * symbols.length)];
+  return Array.from({ length: 3 }, () => [r(), r(), r(), r(), r()]);
 };
 
 export default function AiSlot() {
-  const [reels, setReels] = useState([
-    ['', '', ''],
-    ['', '', ''],
-    ['', '', '']
-  ]);
-  const [spinning, setSpinning] = useState(false);
+  const [reels, setReels] = useState(getRandomSymbols());
+  const [isSpinning, setIsSpinning] = useState(false);
 
   const spin = () => {
-    if (spinning) return;
-    setSpinning(true);
-
-    let ticks = 0;
-    const interval = setInterval(() => {
-      setReels([
-        [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()],
-        [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()],
-        [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()]
-      ]);
-
-      ticks++;
-      if (ticks > 15) {
-        clearInterval(interval);
-        setSpinning(false);
-      }
-    }, 80);
+    if (isSpinning) return;
+    setIsSpinning(true);
+    setReels(getRandomSymbols());
+    setTimeout(() => setIsSpinning(false), 1500);
   };
 
   const styles = {
@@ -54,13 +37,13 @@ export default function AiSlot() {
     },
     title: {
       fontFamily: 'Orbitron',
-      fontSize: '2.5rem',
-      marginBottom: '1.5rem',
+      fontSize: '2.8rem',
       fontWeight: 1100,
       color: '#00FFFF',
       textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
+      marginBottom: '1.2rem'
     },
-    slotGrid: {
+    slotContainer: {
       display: 'flex',
       gap: '12px',
       padding: '1.5rem',
@@ -68,23 +51,28 @@ export default function AiSlot() {
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
       boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
       border: '6px solid #8a2be2',
-      position: 'relative' as const,
     },
     reel: {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: '10px',
-    },
-    cell: {
-      width: '100px',
-      height: '100px',
+      width: '120px',
+      height: '300px',
+      overflow: 'hidden',
+      borderRadius: '16px',
       backgroundColor: '#121212',
       border: '2px solid #ffffff55',
-      borderRadius: '16px',
+      boxShadow: 'inset 0 0 5px #00000099',
+    },
+    reelInner: (spin: boolean) => ({
+      display: 'flex',
+      flexDirection: 'column' as const,
+      transform: spin ? 'translateY(-240px)' : 'translateY(0)',
+      transition: spin ? 'transform 1.2s ease-out' : 'none',
+    }),
+    symbolBox: {
+      width: '100%',
+      height: '100px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: 'inset 0 0 5px #00000099',
     },
     spinButton: {
       marginTop: '2rem',
@@ -103,28 +91,26 @@ export default function AiSlot() {
   return (
     <div style={styles.page}>
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
-
-      <div style={styles.slotGrid}>
-        {reels.map((reel, reelIndex) => (
-          <div key={reelIndex} style={styles.reel}>
-            {reel.map((symbol, rowIndex) => (
-              <div key={`${reelIndex}-${rowIndex}`} style={styles.cell}>
-                {symbol && (
+      <div style={styles.slotContainer}>
+        {reels.map((reel, i) => (
+          <div key={i} style={styles.reel}>
+            <div style={styles.reelInner(isSpinning)}>
+              {reel.map((symbol, j) => (
+                <div key={j} style={styles.symbolBox}>
                   <Image
-                    src={symbol}
-                    alt="symbol"
-                    width={140}
-                    height={140}
+                    src={`/slot-symbols/${symbol}.png`}
+                    alt={symbol}
+                    width={90}
+                    height={90}
                     style={{ objectFit: 'contain' }}
                   />
-                )}
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
-
-      <button style={styles.spinButton} onClick={spin} disabled={spinning}>
+      <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
         🎰 Gira
       </button>
     </div>
