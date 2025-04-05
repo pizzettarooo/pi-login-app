@@ -17,7 +17,9 @@ export default function HomePage() {
         <Link href="/login" style={styles.button}>Login</Link>
         <Link href="/register" style={styles.button}>Registrati</Link>
       </div>
-      <p style={styles.love}>Love On Pi</p>
+      <h2 style={styles.love}>
+        <span style={styles.cyan}>Love</span> <span style={styles.pink}>On</span> <span style={styles.yellow}>Pi</span>
+      </h2>
     </div>
   );
 }
@@ -43,11 +45,15 @@ const styles = {
   },
   cyan: {
     color: '#00FFFF',
-    textShadow: '0 0 8px #00ffffaa, 0 0 16px #00ffff66'
+    textShadow: '0 0 12px #00ffffaa, 0 0 24px #00ffff66'
   },
   pink: {
     color: '#FF00FF',
-    textShadow: '0 0 8px #FF00FFaa, 0 0 16px #FF00FF66'
+    textShadow: '0 0 12px #FF00FFaa, 0 0 24px #FF00FF66'
+  },
+  yellow: {
+    color: '#FFD700',
+    textShadow: '0 0 12px #FFD700aa, 0 0 24px #FFD70066'
   },
   subtitle: {
     fontSize: '1.1rem',
@@ -80,10 +86,12 @@ const styles = {
     transition: 'all 0.3s ease-in-out'
   } as React.CSSProperties,
   love: {
-    marginTop: '0.5rem',
-    fontSize: '1.2rem',
-    color: '#FF00FF',
-    textShadow: '0 0 6px #ff00ff88, 0 0 12px #ff00ffaa',
-    fontWeight: 'bold' as const
+    marginTop: '1.5rem',
+    fontSize: '2.2rem',
+    fontWeight: 'bold' as const,
+    display: 'flex',
+    gap: '0.5rem',
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 };
