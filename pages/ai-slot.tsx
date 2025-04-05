@@ -178,8 +178,24 @@ export default function AiSlot() {
 
   return (
     <div style={styles.page}>
+      <Image
+        src="/slot-symbols/strategy.png"
+        alt="strategie-vincenti"
+        width={360}
+        height={180}
+        style={{
+          marginBottom: '1.5rem',
+          borderRadius: '16px',
+          boxShadow: '0 0 20px #00ffff88'
+        }}
+      />
+
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
-      {bonusSymbol && <div style={styles.bonus}>🎯 Bonus selezionato: {bonusSymbol.toUpperCase()}</div>}
+      {bonusSymbol && (
+        <div style={styles.bonus}>
+          🎯 Bonus selezionato: {bonusSymbol.toUpperCase()}
+        </div>
+      )}
       <div style={styles.slotContainer}>
         {reelSymbols.map((reel, i) => (
           <div key={i} style={styles.reel}>
@@ -199,8 +215,9 @@ export default function AiSlot() {
                       ...styles.symbolBox,
                       borderRadius: isBonus ? '14px' : '0',
                       animation: isBonus ? 'pulseGlow 1s infinite' : 'none',
-                      boxShadow: isBonus ?
-                        '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66' : 'none'
+                      boxShadow: isBonus
+                        ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66'
+                        : 'none'
                     }}
                   >
                     <Image
