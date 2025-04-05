@@ -170,7 +170,7 @@ export default function AiSlot() {
                       borderRadius: isBonus ? '14px' : '0',
                       animation: isBonus ? 'pulseGlow 1s infinite' : 'none',
                       boxShadow: isBonus
-                        ? '0 0 15px 5px #00ffcc, 0 0 25px 10px #00ffcc66'
+                        ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66'
                         : 'none'
                     }}
                   >
@@ -193,11 +193,10 @@ export default function AiSlot() {
         🎰 Gira
       </button>
 
-      {/* Animazione pulsazione globale */}
       <style>{`
         @keyframes pulseGlow {
           0% { transform: scale(1); }
-          50% { transform: scale(1.08); }
+          50% { transform: scale(1.25); }
           100% { transform: scale(1); }
         }
       `}</style>
