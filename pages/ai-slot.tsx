@@ -1,5 +1,7 @@
+// File: ai-slot.tsx con linea vincente funzionante, partendo dal codice fornito
+
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import '@fontsource/orbitron';
@@ -24,6 +26,9 @@ export default function AiSlot() {
   const [turn, setTurn] = useState(0);
   const [score, setScore] = useState(0);
   const [bonusCount, setBonusCount] = useState(0);
+  const [winningPositions, setWinningPositions] = useState<{ col: number; row: number }[] | null>(null);
+
+  const symbolRefs = useRef<HTMLDivElement[][]>([[], [], []]);
 
   useEffect(() => {
     const savedBonus = localStorage.getItem('bonusSymbol');
@@ -47,6 +52,7 @@ export default function AiSlot() {
   const spin = () => {
     if (isSpinning || turn >= 10 || !bonusSymbol) return;
     setIsSpinning(true);
+    setWinningPositions(null);
 
     const result: string[][] = Array.from({ length: 3 }, () =>
       Array.from({ length: 3 }, getRandomSymbol)
@@ -76,18 +82,21 @@ export default function AiSlot() {
     });
 
     let linePoints = 0;
+    let winPos: { col: number; row: number }[] | null = null;
     const lines = [
-      [result[0][0], result[1][0], result[2][0]],
-      [result[0][1], result[1][1], result[2][1]],
-      [result[0][2], result[1][2], result[2][2]],
-      [result[0][0], result[1][1], result[2][2]],
-      [result[0][2], result[1][1], result[2][0]]
+      [ [0,0], [1,0], [2,0] ],
+      [ [0,1], [1,1], [2,1] ],
+      [ [0,2], [1,2], [2,2] ],
+      [ [0,0], [1,1], [2,2] ],
+      [ [0,2], [1,1], [2,0] ]
     ];
 
     lines.forEach(line => {
-      if (line.every(symbol => symbol === line[0])) {
-        const isBonusLine = line[0] === bonusSymbol;
-        linePoints += isBonusLine ? 150 : 15;
+      const values = line.map(([c, r]) => result[c][r]);
+      if (values.every(v => v === values[0])) {
+        const isBonus = values[0] === bonusSymbol;
+        linePoints += isBonus ? 150 : 15;
+        winPos = line.map(([col, row]) => ({ col, row }));
       }
     });
 
@@ -110,7 +119,7 @@ export default function AiSlot() {
       }
 
       if (matches >= 3) {
-        const counts = [0, 0, 0]; // 0 = no match, 1 = sym, 2 = wild
+        const counts = [0, 0, 0];
         for (let col = 0; col < 3; col++) {
           if (columns[col].includes(sym)) {
             counts[col] = 1;
@@ -144,6 +153,7 @@ export default function AiSlot() {
 
     setBonusCount(prev => prev + count);
     setScore(prev => prev + count * 10 + linePoints + anyMatchPoints);
+    if (winPos) setWinningPositions(winPos);
   };
 
   const styles = {
@@ -178,7 +188,8 @@ export default function AiSlot() {
       borderRadius: '30px',
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
       boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
-      border: '6px solid #8a2be2'
+      border: '6px solid #8a2be2',
+      position: 'relative'
     },
     reel: {
       width: '120px',
@@ -238,6 +249,7 @@ export default function AiSlot() {
                 return (
                   <div
                     key={j}
+                    ref={(el) => symbolRefs.current[i][j] = el!}
                     style={{
                       ...styles.symbolBox,
                       borderRadius: isBonus ? '14px' : '0',
@@ -260,6 +272,35 @@ export default function AiSlot() {
             </div>
           </div>
         ))}
+
+        {winningPositions && (
+          <svg
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none'
+            }}
+          >
+            <polyline
+              points={
+                winningPositions.map(({ col, row }) => {
+                  const el = symbolRefs.current[col][row];
+                  if (!el) return '';
+                  const rect = el.getBoundingClientRect();
+                  return `${rect.left + rect.width / 2},${rect.top + rect.height / 2}`;
+                }).join(' ')
+              }
+              stroke="#FF0000"
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
       </div>
       <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
       <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
