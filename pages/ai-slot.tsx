@@ -109,7 +109,6 @@ export default function AiSlot() {
       display: 'grid',
       gridTemplateColumns: 'repeat(4, auto)',
       gap: '1rem',
-      flexWrap: 'wrap',
       justifyContent: 'center',
       marginBottom: '2rem'
     },
