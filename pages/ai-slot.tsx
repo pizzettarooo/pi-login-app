@@ -75,45 +75,32 @@ export default function AiSlot() {
       });
     });
 
-    let points = 0;
-    const winningLines = [
-      // orizzontali
+    let linePoints = 0;
+    const lines = [
       [[0, 0], [1, 0], [2, 0]],
       [[0, 1], [1, 1], [2, 1]],
       [[0, 2], [1, 2], [2, 2]],
-      // diagonali
       [[0, 0], [1, 1], [2, 2]],
       [[0, 2], [1, 1], [2, 0]],
-      // speciali
       [[0, 0], [1, 1], [2, 0]],
       [[0, 2], [1, 1], [2, 2]],
-      [[0, 1], [1, 1], [2, 0]],
-      [[0, 1], [1, 1], [2, 2]],
+      [[0, 0], [1, 2], [2, 0]],
+      [[0, 2], [1, 0], [2, 2]],
+      [[0, 0], [1, 0], [2, 1]],
       [[0, 2], [1, 2], [2, 1]]
     ];
 
-    for (const line of winningLines) {
-      const symbolsInLine = line.map(([col, row]) => result[col][row]);
-      const counts = symbolsInLine.reduce((acc, sym) => {
-        if (sym === bonusSymbol) acc.bonus++;
-        else if (sym === 'wild') acc.wild++;
-        else if (sym === acc.symbol || acc.symbol === '') {
-          acc.symbol = sym;
-          acc.normal++;
-        }
-        return acc;
-      }, { symbol: '', bonus: 0, wild: 0, normal: 0 });
-
-      if (counts.bonus === 3) points += 150;
-      else if (counts.bonus === 2 && counts.wild === 1) points += 70;
-      else if (counts.bonus === 1 && counts.wild === 2) points += 50;
-      else if (counts.normal === 3) points += 15;
-      else if (counts.normal === 2 && counts.wild === 1) points += 10;
-      else if (counts.normal === 1 && counts.wild === 2) points += 5;
-    }
+    lines.forEach(line => {
+      const values = line.map(([col, row]) => result[col][row]);
+      if (values.every(v => v === values[0] || v === 'wild')) {
+        const base = values.find(v => v !== 'wild') || values[0];
+        const isBonus = base === bonusSymbol;
+        linePoints += isBonus ? 150 : 15;
+      }
+    });
 
     setBonusCount(prev => prev + count);
-    setScore(prev => prev + count * 10 + points);
+    setScore(prev => prev + count * 10 + linePoints);
   };
 
   const styles = {
@@ -212,9 +199,8 @@ export default function AiSlot() {
                       ...styles.symbolBox,
                       borderRadius: isBonus ? '14px' : '0',
                       animation: isBonus ? 'pulseGlow 1s infinite' : 'none',
-                      boxShadow: isBonus
-                        ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66'
-                        : 'none'
+                      boxShadow: isBonus ?
+                        '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66' : 'none'
                     }}
                   >
                     <Image
