@@ -249,7 +249,7 @@ export default function AiSlot() {
                 return (
                   <div
                     key={j}
-                    ref={(el) => symbolRefs.current[i][j] = el!}
+                    ref={(el) => { symbolRefs.current[i][j] = el!; }}
                     style={{
                       ...styles.symbolBox,
                       borderRadius: isBonus ? '14px' : '0',
