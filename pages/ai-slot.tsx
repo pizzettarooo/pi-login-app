@@ -189,7 +189,7 @@ export default function AiSlot() {
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
       boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
       border: '6px solid #8a2be2',
-      position: 'relative' as const
+      position: 'relative' as 'relative'
     },
     reel: {
       width: '120px',
