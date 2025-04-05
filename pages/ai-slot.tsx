@@ -21,8 +21,7 @@ export default function AiSlot() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [turn, setTurn] = useState(0);
   const [score, setScore] = useState(0);
-  const [bonusHits, setBonusHits] = useState(0);
-  const [showSummary, setShowSummary] = useState(false);
+  const [bonusCount, setBonusCount] = useState(0);
 
   useEffect(() => {
     const savedBonus = localStorage.getItem('bonusSymbol');
@@ -36,50 +35,57 @@ export default function AiSlot() {
   useEffect(() => {
     if (turn >= 10) {
       localStorage.removeItem('bonusSymbol');
-      setTimeout(() => setShowSummary(true), 1000);
+      setTimeout(() => router.push({
+        pathname: '/dashboard',
+        query: { score: score.toString(), bonusCount: bonusCount.toString() }
+      }), 1500);
     }
   }, [turn]);
 
   const spin = () => {
     if (isSpinning || turn >= 10 || !bonusSymbol) return;
     setIsSpinning(true);
-    const tempResults: string[][] = [[], [], []];
-
     const intervals: NodeJS.Timeout[] = [];
+    const finalSymbols: string[][] = [[], [], []];
 
     for (let reelIndex = 0; reelIndex < 3; reelIndex++) {
       let count = 0;
       const interval = setInterval(() => {
         count++;
-        const reelSymbols = Array.from({ length: 5 }, getRandomSymbol);
-        tempResults[reelIndex] = reelSymbols;
-        setResultSymbols([...tempResults]);
-
+        const newSymbols = Array.from({ length: 5 }, getRandomSymbol);
+        setResultSymbols(prev => {
+          const updated = [...prev];
+          updated[reelIndex] = newSymbols;
+          return updated;
+        });
         if (count > 20 + reelIndex * 10) {
           clearInterval(interval);
+          finalSymbols[reelIndex] = newSymbols;
           if (reelIndex === 2) {
             setTimeout(() => {
-              const visibleSymbols = tempResults.map(reel => reel.slice(1, 4));
-              let points = 0;
-              let hits = 0;
-              visibleSymbols.forEach(reel => {
-                reel.forEach(symbol => {
-                  if (symbol === bonusSymbol) {
-                    points += 10;
-                    hits++;
-                  }
-                });
-              });
-              setScore(prev => prev + points);
-              setBonusHits(prev => prev + hits);
+              calculateScore(finalSymbols);
               setTurn(prev => prev + 1);
               setIsSpinning(false);
-            }, 300);
+            }, 200);
           }
         }
       }, 60);
       intervals.push(interval);
     }
+  };
+
+  const calculateScore = (symbolsToCheck: string[][]) => {
+    let points = 0;
+    let bonusHits = 0;
+    for (let i = 0; i < 3; i++) {
+      const symbol = symbolsToCheck[i][2]; // middle visible symbol of each reel
+      if (symbol === bonusSymbol) {
+        points += 10;
+        bonusHits++;
+      }
+    }
+    setScore(prev => prev + points);
+    setBonusCount(prev => prev + bonusHits);
   };
 
   const styles = {
@@ -153,41 +159,8 @@ export default function AiSlot() {
       fontSize: '1.1rem',
       marginTop: '1rem',
       color: '#FFD700',
-    },
-    summary: {
-      textAlign: 'center' as const,
-      backgroundColor: '#1c1c1c',
-      padding: '2rem',
-      borderRadius: '20px',
-      border: '2px solid #00FFFF',
-    },
-    backButton: {
-      marginTop: '1.5rem',
-      padding: '0.5rem 1.2rem',
-      fontSize: '1rem',
-      fontWeight: 'bold' as const,
-      color: '#fff',
-      backgroundColor: '#00CED1',
-      border: 'none',
-      borderRadius: '10px',
-      cursor: 'pointer'
     }
   };
-
-  if (showSummary) {
-    return (
-      <div style={styles.page}>
-        <div style={styles.summary}>
-          <h2>🎉 Partita terminata!</h2>
-          <p>Punti totali: {score}</p>
-          <p>Bonus "{bonusSymbol?.toUpperCase()}" uscito: {bonusHits} volte</p>
-          <button style={styles.backButton} onClick={() => router.push('/dashboard')}>
-            Torna alla Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={styles.page}>
