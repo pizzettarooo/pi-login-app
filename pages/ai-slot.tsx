@@ -1,5 +1,3 @@
-// File: ai-slot.tsx aggiornato con logica corretta vincite sparse + glow bonus
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -65,113 +63,114 @@ export default function AiSlot() {
 
   const calculateScore = (result: string[][]) => {
     let count = 0;
-    result.forEach(reel => {
-      reel.forEach(symbol => {
-        if (symbol === bonusSymbol) count++;
-      });
+    result.forEach(reel => reel.forEach(symbol => {
+      if (symbol === bonusSymbol) count++;
+    }));
+
+    let linePoints = 0;
+    const lines = [
+      [[0,0],[1,0],[2,0]],
+      [[0,1],[1,1],[2,1]],
+      [[0,2],[1,2],[2,2]],
+      [[0,0],[1,1],[2,2]],
+      [[0,2],[1,1],[2,0]]
+    ];
+    lines.forEach(line => {
+      const [a, b, c] = line;
+      const values = [result[a[0]][a[1]], result[b[0]][b[1]], result[c[0]][c[1]]];
+      if (values.every(v => v === values[0])) {
+        linePoints += values[0] === bonusSymbol ? 150 : 15;
+      }
     });
 
-    let totalPoints = 0;
-    const columns = [0, 1, 2].map(col => [result[0][col], result[1][col], result[2][col]]);
+    let anyMatchPoints = 0;
     const symbolsToCheck = symbols.filter(s => s !== 'wild');
 
     symbolsToCheck.forEach(sym => {
-      let counts = [0, 0, 0];
+      let positions: [number, number][] = [];
       for (let col = 0; col < 3; col++) {
-        if (columns[col].includes(sym)) counts[col] = 1;
-        else if (columns[col].includes('wild')) counts[col] = 2;
+        for (let row = 0; row < 3; row++) {
+          const val = result[col][row];
+          if (val === sym || val === 'wild') {
+            positions.push([col, row]);
+          }
+        }
       }
 
-      const numSym = counts.filter(c => c === 1).length;
-      const numWild = counts.filter(c => c === 2).length;
-
-      if (numSym + numWild >= 3) {
-        if (sym === bonusSymbol) {
-          if (numSym === 3) totalPoints += 150;
-          else if (numSym === 2 && numWild === 1) totalPoints += 70;
-          else if (numSym === 1 && numWild === 2) totalPoints += 50;
-        } else {
-          if (numSym === 3) totalPoints += 15;
-          else if (numSym === 2 && numWild === 1) totalPoints += 10;
-          else if (numSym === 1 && numWild === 2) totalPoints += 5;
+      const uniqueCombos: Set<string> = new Set();
+      for (let i = 0; i < positions.length; i++) {
+        for (let j = i + 1; j < positions.length; j++) {
+          for (let k = j + 1; k < positions.length; k++) {
+            const [c1, r1] = positions[i];
+            const [c2, r2] = positions[j];
+            const [c3, r3] = positions[k];
+            const cols = new Set([c1, c2, c3]);
+            if (cols.size === 3) {
+              const vals = [result[c1][r1], result[c2][r2], result[c3][r3]];
+              const wilds = vals.filter(v => v === 'wild').length;
+              const symbolsMatched = vals.filter(v => v === sym).length;
+              if (wilds + symbolsMatched === 3) {
+                const key = [c1, r1, c2, r2, c3, r3].sort().join('-');
+                if (!uniqueCombos.has(key)) {
+                  uniqueCombos.add(key);
+                  if (sym === bonusSymbol) {
+                    if (wilds === 0) anyMatchPoints += 150;
+                    else if (wilds === 1) anyMatchPoints += 70;
+                    else anyMatchPoints += 50;
+                  } else {
+                    if (wilds === 0) anyMatchPoints += 15;
+                    else if (wilds === 1) anyMatchPoints += 10;
+                    else anyMatchPoints += 5;
+                  }
+                }
+              }
+            }
+          }
         }
       }
     });
 
     setBonusCount(prev => prev + count);
-    setScore(prev => prev + count * 10 + totalPoints);
+    setScore(prev => prev + count * 10 + linePoints + anyMatchPoints);
   };
 
   const styles = {
     page: {
-      minHeight: '100vh',
-      background: 'linear-gradient(to bottom right, #002B36, #001F2B)',
-      color: 'white',
-      display: 'flex',
-      flexDirection: 'column' as const,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem'
+      minHeight: '100vh', background: 'linear-gradient(to bottom right, #002B36, #001F2B)',
+      color: 'white', display: 'flex', flexDirection: 'column' as const,
+      alignItems: 'center', justifyContent: 'center', padding: '2rem'
     },
     title: {
-      fontFamily: 'Orbitron',
-      fontSize: '2.8rem',
-      fontWeight: 1100,
-      color: '#00FFFF',
-      textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
-      marginBottom: '1.2rem'
+      fontFamily: 'Orbitron', fontSize: '2.8rem', fontWeight: 1100,
+      color: '#00FFFF', textShadow: '0 0 8px #0ff, 0 0 16px #0ff', marginBottom: '1.2rem'
     },
     bonus: {
-      fontSize: '1rem',
-      marginBottom: '1rem',
-      fontWeight: 'bold' as const,
-      color: '#00FFAA'
+      fontSize: '1rem', marginBottom: '1rem', fontWeight: 'bold' as const, color: '#00FFAA'
     },
     slotContainer: {
-      display: 'flex',
-      gap: '12px',
-      padding: '1.5rem',
-      borderRadius: '30px',
+      display: 'flex', gap: '12px', padding: '1.5rem', borderRadius: '30px',
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
       boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
       border: '6px solid #8a2be2'
     },
     reel: {
-      width: '120px',
-      height: '300px',
-      overflow: 'hidden',
-      borderRadius: '16px',
-      backgroundColor: '#121212',
-      border: '2px solid #ffffff55',
+      width: '120px', height: '300px', overflow: 'hidden', borderRadius: '16px',
+      backgroundColor: '#121212', border: '2px solid #ffffff55',
       boxShadow: 'inset 0 0 5px #00000099'
     },
     reelInner: {
-      display: 'flex',
-      flexDirection: 'column' as const
+      display: 'flex', flexDirection: 'column' as const
     },
     symbolBox: {
-      width: '100%',
-      height: '100px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
+      width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center'
     },
     spinButton: {
-      marginTop: '2rem',
-      padding: '0.75rem 1.5rem',
-      fontSize: '1rem',
-      fontWeight: 'bold' as const,
-      color: '#fff',
-      backgroundColor: '#FF4500',
-      border: 'none',
-      borderRadius: '12px',
-      cursor: 'pointer',
-      boxShadow: '0 4px 0 #c33d00'
+      marginTop: '2rem', padding: '0.75rem 1.5rem', fontSize: '1rem', fontWeight: 'bold' as const,
+      color: '#fff', backgroundColor: '#FF4500', border: 'none', borderRadius: '12px',
+      cursor: 'pointer', boxShadow: '0 4px 0 #c33d00'
     },
     score: {
-      fontSize: '1.1rem',
-      marginTop: '1rem',
-      color: '#FFD700'
+      fontSize: '1.1rem', marginTop: '1rem', color: '#FFD700'
     }
   };
 
@@ -198,9 +197,7 @@ export default function AiSlot() {
                       ...styles.symbolBox,
                       borderRadius: isBonus ? '14px' : '0',
                       animation: isBonus ? 'pulseGlow 1s infinite' : 'none',
-                      boxShadow: isBonus
-                        ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66'
-                        : 'none'
+                      boxShadow: isBonus ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66' : 'none'
                     }}
                   >
                     <Image
@@ -226,6 +223,7 @@ export default function AiSlot() {
           50% { transform: scale(1.25); }
           100% { transform: scale(1); }
         }
+
         @keyframes reelStop {
           from { transform: translateY(20px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
