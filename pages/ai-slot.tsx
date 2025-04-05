@@ -75,13 +75,11 @@ export default function AiSlot() {
       });
     });
 
-    let bonusLinePoints = 0;
+    let linePoints = 0;
     const lines = [
-      // Orizzontali
       [result[0][0], result[1][0], result[2][0]],
       [result[0][1], result[1][1], result[2][1]],
       [result[0][2], result[1][2], result[2][2]],
-      // Diagonali
       [result[0][0], result[1][1], result[2][2]],
       [result[0][2], result[1][1], result[2][0]]
     ];
@@ -89,12 +87,63 @@ export default function AiSlot() {
     lines.forEach(line => {
       if (line.every(symbol => symbol === line[0])) {
         const isBonusLine = line[0] === bonusSymbol;
-        bonusLinePoints += isBonusLine ? 150 : 15;
+        linePoints += isBonusLine ? 150 : 15;
+      }
+    });
+
+    let anyMatchPoints = 0;
+    const columns = [0, 1, 2].map(col =>
+      [result[0][col], result[1][col], result[2][col]]
+    );
+
+    const symbolsToCheck = symbols.filter(s => s !== 'wild');
+    symbolsToCheck.forEach(sym => {
+      let matches = 0;
+      for (let col = 0; col < 3; col++) {
+        const hasSymbol = columns[col].includes(sym);
+        const hasWild = columns[col].includes('wild');
+        if (hasSymbol) {
+          matches++;
+        } else if (hasWild) {
+          matches++;
+        }
+      }
+
+      if (matches >= 3) {
+        const counts = [0, 0, 0]; // 0 = no match, 1 = sym, 2 = wild
+        for (let col = 0; col < 3; col++) {
+          if (columns[col].includes(sym)) {
+            counts[col] = 1;
+          } else if (columns[col].includes('wild')) {
+            counts[col] = 2;
+          }
+        }
+
+        const numSym = counts.filter(c => c === 1).length;
+        const numWild = counts.filter(c => c === 2).length;
+
+        if (sym === bonusSymbol) {
+          if (numSym === 3) {
+            anyMatchPoints += 150;
+          } else if (numSym === 2 && numWild === 1) {
+            anyMatchPoints += 70;
+          } else if (numSym === 1 && numWild === 2) {
+            anyMatchPoints += 50;
+          }
+        } else {
+          if (numSym === 3) {
+            anyMatchPoints += 15;
+          } else if (numSym === 2 && numWild === 1) {
+            anyMatchPoints += 10;
+          } else if (numSym === 1 && numWild === 2) {
+            anyMatchPoints += 5;
+          }
+        }
       }
     });
 
     setBonusCount(prev => prev + count);
-    setScore(prev => prev + count * 10 + bonusLinePoints);
+    setScore(prev => prev + count * 10 + linePoints + anyMatchPoints);
   };
 
   const styles = {
