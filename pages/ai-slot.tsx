@@ -1,4 +1,4 @@
-// File: ai-slot.tsx con linea vincente funzionante, partendo dal codice fornito
+// File: ai-slot.tsx con simboli vincenti illuminati e rimozione linea SVG
 
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
@@ -26,9 +26,7 @@ export default function AiSlot() {
   const [turn, setTurn] = useState(0);
   const [score, setScore] = useState(0);
   const [bonusCount, setBonusCount] = useState(0);
-  const [winningPositions, setWinningPositions] = useState<{ col: number; row: number }[] | null>(null);
-
-  const symbolRefs = useRef<HTMLDivElement[][]>([[], [], []]);
+  const [highlighted, setHighlighted] = useState<{ col: number; row: number }[]>([]);
 
   useEffect(() => {
     const savedBonus = localStorage.getItem('bonusSymbol');
@@ -52,7 +50,7 @@ export default function AiSlot() {
   const spin = () => {
     if (isSpinning || turn >= 10 || !bonusSymbol) return;
     setIsSpinning(true);
-    setWinningPositions(null);
+    setHighlighted([]);
 
     const result: string[][] = Array.from({ length: 3 }, () =>
       Array.from({ length: 3 }, getRandomSymbol)
@@ -81,8 +79,8 @@ export default function AiSlot() {
       });
     });
 
+    let highlights: { col: number; row: number }[] = [];
     let linePoints = 0;
-    let winPos: { col: number; row: number }[] | null = null;
     const lines = [
       [ [0,0], [1,0], [2,0] ],
       [ [0,1], [1,1], [2,1] ],
@@ -96,7 +94,7 @@ export default function AiSlot() {
       if (values.every(v => v === values[0])) {
         const isBonus = values[0] === bonusSymbol;
         linePoints += isBonus ? 150 : 15;
-        winPos = line.map(([col, row]) => ({ col, row }));
+        highlights.push(...line.map(([col, row]) => ({ col, row })));
       }
     });
 
@@ -153,7 +151,7 @@ export default function AiSlot() {
 
     setBonusCount(prev => prev + count);
     setScore(prev => prev + count * 10 + linePoints + anyMatchPoints);
-    if (winPos) setWinningPositions(winPos);
+    setHighlighted(highlights);
   };
 
   const styles = {
@@ -246,15 +244,15 @@ export default function AiSlot() {
             >
               {reel.map((symbol, j) => {
                 const isBonus = symbol === bonusSymbol;
+                const isWinner = highlighted.some(pos => pos.col === i && pos.row === j);
                 return (
                   <div
                     key={j}
-                    ref={(el) => { symbolRefs.current[i][j] = el!; }}
                     style={{
                       ...styles.symbolBox,
                       borderRadius: isBonus ? '14px' : '0',
-                      animation: isBonus ? 'pulseGlow 1s infinite' : 'none',
-                      boxShadow: isBonus
+                      animation: isWinner ? 'pulseGlow 1s infinite' : isBonus ? 'pulseGlow 1s infinite' : 'none',
+                      boxShadow: isWinner ? '0 0 18px 6px #ff0000, 0 0 32px 12px #ff000066' : isBonus
                         ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66'
                         : 'none'
                     }}
@@ -272,35 +270,6 @@ export default function AiSlot() {
             </div>
           </div>
         ))}
-
-        {winningPositions && (
-          <svg
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              pointerEvents: 'none'
-            }}
-          >
-            <polyline
-              points={
-                winningPositions.map(({ col, row }) => {
-                  const el = symbolRefs.current[col][row];
-                  if (!el) return '';
-                  const rect = el.getBoundingClientRect();
-                  return `${rect.left + rect.width / 2},${rect.top + rect.height / 2}`;
-                }).join(' ')
-              }
-              stroke="#FF0000"
-              strokeWidth="4"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
       </div>
       <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
       <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
