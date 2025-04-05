@@ -7,7 +7,7 @@ import '@fontsource/orbitron';
 export default function HomePage() {
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>🎰 Benvenuto nella <span style={styles.highlight}>Slot PvP del Futuro</span>!</h1>
+      <h1 style={styles.title}><span style={styles.cyan}>Benvenuto nella</span> <span style={styles.pink}>Slot PvP del Futuro</span>!</h1>
       <p style={styles.subtitle}>
         Sei davanti alla <strong>prima slot machine al mondo</strong> con supporto esclusivo per <strong>Pi Network</strong>,
         dove <span style={styles.accent}>abilità</span> e <span style={styles.accent}>strategia</span> si fondono in uno scontro PvP mozzafiato.
@@ -17,6 +17,7 @@ export default function HomePage() {
         <Link href="/login" style={styles.button}>Login</Link>
         <Link href="/register" style={styles.button}>Registrati</Link>
       </div>
+      <p style={styles.love}>Love On Pi</p>
     </div>
   );
 }
@@ -38,19 +39,21 @@ const styles = {
     fontSize: '2.8rem',
     fontWeight: 900,
     marginBottom: '1.2rem',
-    color: '#00ffff',
-    textShadow: '0 0 8px #00ffffaa, 0 0 20px #00ffff66'
+    textShadow: '0 0 12px #00ffff, 0 0 32px #ff00ff'
   },
-  highlight: {
+  cyan: {
+    color: '#00FFFF',
+    textShadow: '0 0 8px #00ffffaa, 0 0 16px #00ffff66'
+  },
+  pink: {
     color: '#FF00FF',
-    textShadow: '0 0 10px #FF00FF66'
+    textShadow: '0 0 8px #FF00FFaa, 0 0 16px #FF00FF66'
   },
   subtitle: {
     fontSize: '1.1rem',
     maxWidth: '600px',
     marginBottom: '2rem',
-    lineHeight: '1.6',
-    animation: 'fadeIn 2s ease-out'
+    lineHeight: '1.6'
   },
   accent: {
     color: '#FFD700',
@@ -61,7 +64,8 @@ const styles = {
   },
   buttons: {
     display: 'flex',
-    gap: '1rem'
+    gap: '1rem',
+    marginBottom: '1rem'
   },
   button: {
     backgroundColor: '#111',
@@ -74,5 +78,12 @@ const styles = {
     border: '2px solid #00FFFF',
     boxShadow: '0 0 8px #00FFFF66',
     transition: 'all 0.3s ease-in-out'
-  } as React.CSSProperties
+  } as React.CSSProperties,
+  love: {
+    marginTop: '0.5rem',
+    fontSize: '1.2rem',
+    color: '#FF00FF',
+    textShadow: '0 0 6px #ff00ff88, 0 0 12px #ff00ffaa',
+    fontWeight: 'bold' as const
+  }
 };
