@@ -285,13 +285,20 @@ export default function AiSlot() {
             }}
           >
             <polyline
-              points={
-                winningPositions.map(({ col, row }) => {
-                  const el = symbolRefs.current[col][row];
-                  if (!el) return '';
-                  const rect = el.getBoundingClientRect();
-                  return `${rect.left + rect.width / 2},${rect.top + rect.height / 2}`;
-                }).join(' ')
+  points={(() => {
+    const container = symbolRefs.current[0][0]?.parentElement?.parentElement;
+    const containerRect = container?.getBoundingClientRect();
+    if (!containerRect) return '';
+    return winningPositions.map(({ col, row }) => {
+      const el = symbolRefs.current[col][row];
+      if (!el) return '';
+      const rect = el.getBoundingClientRect();
+      const x = rect.left - containerRect.left + rect.width / 2;
+      const y = rect.top - containerRect.top + rect.height / 2;
+      return `${x},${y}`;
+    }).join(' ');
+  })()}
+
               }
               stroke="#FF0000"
               strokeWidth="4"
