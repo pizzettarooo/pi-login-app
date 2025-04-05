@@ -1,5 +1,3 @@
-// File: ai-slot.tsx aggiornato con logica vincente basata solo su combinazioni definite dall'utente
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -77,77 +75,118 @@ export default function AiSlot() {
       });
     });
 
+    let points = 0;
     const winningLines = [
-      [[0, 0], [1, 0], [2, 0]], // top row
-      [[0, 1], [1, 1], [2, 1]], // middle row
-      [[0, 2], [1, 2], [2, 2]], // bottom row
-      [[0, 0], [1, 1], [2, 2]], // V diagonal
-      [[0, 2], [1, 1], [2, 0]], // inverted V diagonal
-      [[0, 0], [1, 0], [2, 1]],
-      [[0, 1], [1, 1], [2, 2]],
+      // orizzontali
+      [[0, 0], [1, 0], [2, 0]],
+      [[0, 1], [1, 1], [2, 1]],
+      [[0, 2], [1, 2], [2, 2]],
+      // diagonali
+      [[0, 0], [1, 1], [2, 2]],
+      [[0, 2], [1, 1], [2, 0]],
+      // speciali
+      [[0, 0], [1, 1], [2, 0]],
+      [[0, 2], [1, 1], [2, 2]],
       [[0, 1], [1, 1], [2, 0]],
+      [[0, 1], [1, 1], [2, 2]],
       [[0, 2], [1, 2], [2, 1]]
     ];
 
-    let totalPoints = 0;
-
     for (const line of winningLines) {
-      const values = line.map(([c, r]) => result[c][r]);
-
-      // Conta simboli uguali e wild
-      const base = values.filter(v => v !== 'wild');
-      const unique = [...new Set(base)];
-      if (unique.length === 1) {
-        const sym = unique[0];
-        const wilds = values.filter(v => v === 'wild').length;
-        const bonus = sym === bonusSymbol;
-
-        if (bonus) {
-          if (wilds === 0) totalPoints += 150;
-          else if (wilds === 1) totalPoints += 70;
-          else if (wilds === 2) totalPoints += 50;
-        } else {
-          if (wilds === 0) totalPoints += 15;
-          else if (wilds === 1) totalPoints += 10;
-          else if (wilds === 2) totalPoints += 5;
+      const symbolsInLine = line.map(([col, row]) => result[col][row]);
+      const counts = symbolsInLine.reduce((acc, sym) => {
+        if (sym === bonusSymbol) acc.bonus++;
+        else if (sym === 'wild') acc.wild++;
+        else if (sym === acc.symbol || acc.symbol === '') {
+          acc.symbol = sym;
+          acc.normal++;
         }
-      }
+        return acc;
+      }, { symbol: '', bonus: 0, wild: 0, normal: 0 });
+
+      if (counts.bonus === 3) points += 150;
+      else if (counts.bonus === 2 && counts.wild === 1) points += 70;
+      else if (counts.bonus === 1 && counts.wild === 2) points += 50;
+      else if (counts.normal === 3) points += 15;
+      else if (counts.normal === 2 && counts.wild === 1) points += 10;
+      else if (counts.normal === 1 && counts.wild === 2) points += 5;
     }
 
     setBonusCount(prev => prev + count);
-    setScore(prev => prev + count * 10 + totalPoints);
+    setScore(prev => prev + count * 10 + points);
   };
 
   const styles = {
     page: {
-      minHeight: '100vh', background: 'linear-gradient(to bottom right, #002B36, #001F2B)',
-      color: 'white', display: 'flex', flexDirection: 'column' as const,
-      alignItems: 'center', justifyContent: 'center', padding: '2rem'
+      minHeight: '100vh',
+      background: 'linear-gradient(to bottom right, #002B36, #001F2B)',
+      color: 'white',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem'
     },
     title: {
-      fontFamily: 'Orbitron', fontSize: '2.8rem', fontWeight: 1100,
-      color: '#00FFFF', textShadow: '0 0 8px #0ff, 0 0 16px #0ff', marginBottom: '1.2rem'
+      fontFamily: 'Orbitron',
+      fontSize: '2.8rem',
+      fontWeight: 1100,
+      color: '#00FFFF',
+      textShadow: '0 0 8px #0ff, 0 0 16px #0ff',
+      marginBottom: '1.2rem'
     },
-    bonus: { fontSize: '1rem', marginBottom: '1rem', fontWeight: 'bold' as const, color: '#00FFAA' },
+    bonus: {
+      fontSize: '1rem',
+      marginBottom: '1rem',
+      fontWeight: 'bold' as const,
+      color: '#00FFAA'
+    },
     slotContainer: {
-      display: 'flex', gap: '12px', padding: '1.5rem', borderRadius: '30px',
+      display: 'flex',
+      gap: '12px',
+      padding: '1.5rem',
+      borderRadius: '30px',
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
-      boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080', border: '6px solid #8a2be2'
+      boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
+      border: '6px solid #8a2be2'
     },
     reel: {
-      width: '120px', height: '300px', overflow: 'hidden', borderRadius: '16px',
-      backgroundColor: '#121212', border: '2px solid #ffffff55', boxShadow: 'inset 0 0 5px #00000099'
+      width: '120px',
+      height: '300px',
+      overflow: 'hidden',
+      borderRadius: '16px',
+      backgroundColor: '#121212',
+      border: '2px solid #ffffff55',
+      boxShadow: 'inset 0 0 5px #00000099'
     },
-    reelInner: { display: 'flex', flexDirection: 'column' as const },
+    reelInner: {
+      display: 'flex',
+      flexDirection: 'column' as const
+    },
     symbolBox: {
-      width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+      width: '100%',
+      height: '100px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     },
     spinButton: {
-      marginTop: '2rem', padding: '0.75rem 1.5rem', fontSize: '1rem', fontWeight: 'bold' as const,
-      color: '#fff', backgroundColor: '#FF4500', border: 'none', borderRadius: '12px',
-      cursor: 'pointer', boxShadow: '0 4px 0 #c33d00'
+      marginTop: '2rem',
+      padding: '0.75rem 1.5rem',
+      fontSize: '1rem',
+      fontWeight: 'bold' as const,
+      color: '#fff',
+      backgroundColor: '#FF4500',
+      border: 'none',
+      borderRadius: '12px',
+      cursor: 'pointer',
+      boxShadow: '0 4px 0 #c33d00'
     },
-    score: { fontSize: '1.1rem', marginTop: '1rem', color: '#FFD700' }
+    score: {
+      fontSize: '1.1rem',
+      marginTop: '1rem',
+      color: '#FFD700'
+    }
   };
 
   return (
@@ -164,31 +203,38 @@ export default function AiSlot() {
                 animationDelay: !isSpinning ? `${i * 0.3}s` : '0s'
               }}
             >
-              {reel.map((symbol, j) => (
-                <div
-                  key={j}
-                  style={{
-                    ...styles.symbolBox,
-                    borderRadius: symbol === bonusSymbol ? '14px' : '0',
-                    animation: symbol === bonusSymbol ? 'pulseGlow 1s infinite' : 'none',
-                    boxShadow: symbol === bonusSymbol ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66' : 'none'
-                  }}
-                >
-                  <Image
-                    src={`/slot-symbols/${symbol}.png`}
-                    alt={symbol}
-                    width={140}
-                    height={140}
-                    style={{ objectFit: 'contain' }}
-                  />
-                </div>
-              ))}
+              {reel.map((symbol, j) => {
+                const isBonus = symbol === bonusSymbol;
+                return (
+                  <div
+                    key={j}
+                    style={{
+                      ...styles.symbolBox,
+                      borderRadius: isBonus ? '14px' : '0',
+                      animation: isBonus ? 'pulseGlow 1s infinite' : 'none',
+                      boxShadow: isBonus
+                        ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66'
+                        : 'none'
+                    }}
+                  >
+                    <Image
+                      src={`/slot-symbols/${symbol}.png`}
+                      alt={symbol}
+                      width={140}
+                      height={140}
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
       </div>
       <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
-      <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>🎰 Gira</button>
+      <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
+        🎰 Gira
+      </button>
 
       <style>{`
         @keyframes pulseGlow {
