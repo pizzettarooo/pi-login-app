@@ -68,7 +68,39 @@ export default function AiSlot() {
   };
 
   const calculateScore = (result: string[][]) => {
-    // ... (Logica del punteggio invariata per ora)
+    let count = 0;
+    result.forEach(reel => {
+      reel.forEach(symbol => {
+        if (symbol === bonusSymbol) count++;
+      });
+    });
+
+    let linePoints = 0;
+    const lines = [
+      [[0, 0], [1, 0], [2, 0]],
+      [[0, 1], [1, 1], [2, 1]],
+      [[0, 2], [1, 2], [2, 2]],
+      [[0, 0], [1, 1], [2, 2]],
+      [[0, 2], [1, 1], [2, 0]],
+      [[0, 0], [1, 1], [2, 0]],
+      [[0, 2], [1, 1], [2, 2]],
+      [[0, 0], [1, 2], [2, 0]],
+      [[0, 2], [1, 0], [2, 2]],
+      [[0, 0], [1, 0], [2, 1]],
+      [[0, 2], [1, 2], [2, 1]]
+    ];
+
+    lines.forEach(line => {
+      const values = line.map(([col, row]) => result[col][row]);
+      if (values.every(v => v === values[0] || v === 'wild')) {
+        const base = values.find(v => v !== 'wild') || values[0];
+        const isBonus = base === bonusSymbol;
+        linePoints += isBonus ? 150 : 15;
+      }
+    });
+
+    setBonusCount(prev => prev + count);
+    setScore(prev => prev + count * 10 + linePoints);
   };
 
   const styles = {
@@ -104,17 +136,6 @@ export default function AiSlot() {
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
       boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
       border: '6px solid #8a2be2'
-    },
-    gridPreview: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(4, auto)',
-      gap: '1rem',
-      justifyContent: 'center',
-      marginBottom: '2rem'
-    },
-    image: {
-      borderRadius: '12px',
-      boxShadow: '0 0 15px 5px #00FFFF88'
     },
     reel: {
       width: '120px',
@@ -157,19 +178,6 @@ export default function AiSlot() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.gridPreview}>
-        {[...Array(11)].map((_, i) => (
-          <Image
-            key={i}
-            src={`/lines/line${i + 1}.png`}
-            alt={`linea-${i + 1}`}
-            width={100}
-            height={100}
-            style={styles.image}
-          />
-        ))}
-      </div>
-
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
       {bonusSymbol && <div style={styles.bonus}>🎯 Bonus selezionato: {bonusSymbol.toUpperCase()}</div>}
       <div style={styles.slotContainer}>
@@ -191,9 +199,8 @@ export default function AiSlot() {
                       ...styles.symbolBox,
                       borderRadius: isBonus ? '14px' : '0',
                       animation: isBonus ? 'pulseGlow 1s infinite' : 'none',
-                      boxShadow: isBonus
-                        ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66'
-                        : 'none'
+                      boxShadow: isBonus ?
+                        '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66' : 'none'
                     }}
                   >
                     <Image
