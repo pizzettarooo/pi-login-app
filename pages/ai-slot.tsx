@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
@@ -159,17 +160,30 @@ export default function AiSlot() {
         {reelSymbols.map((reel, i) => (
           <div key={i} style={styles.reel}>
             <div style={styles.reelInner}>
-              {reel.map((symbol, j) => (
-                <div key={j} style={styles.symbolBox}>
-                  <Image
-                    src={`/slot-symbols/${symbol}.png`}
-                    alt={symbol}
-                    width={140}
-                    height={140}
-                    style={{ objectFit: 'contain' }}
-                  />
-                </div>
-              ))}
+              {reel.map((symbol, j) => {
+                const isBonus = symbol === bonusSymbol;
+                return (
+                  <div
+                    key={j}
+                    style={{
+                      ...styles.symbolBox,
+                      borderRadius: isBonus ? '14px' : '0',
+                      animation: isBonus ? 'pulseGlow 1s infinite' : 'none',
+                      boxShadow: isBonus
+                        ? '0 0 15px 5px #00ffcc, 0 0 25px 10px #00ffcc66'
+                        : 'none'
+                    }}
+                  >
+                    <Image
+                      src={`/slot-symbols/${symbol}.png`}
+                      alt={symbol}
+                      width={140}
+                      height={140}
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -178,6 +192,15 @@ export default function AiSlot() {
       <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
         🎰 Gira
       </button>
+
+      {/* Animazione pulsazione globale */}
+      <style>{`
+        @keyframes pulseGlow {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+          100% { transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }
