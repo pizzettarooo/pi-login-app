@@ -1,4 +1,4 @@
-// File: ai-slot.tsx completo e corretto con barra vincente
+// File: ai-slot.tsx corretto senza errori runtime
 
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
@@ -27,6 +27,12 @@ export default function AiSlot() {
   const [bonusCount, setBonusCount] = useState(0);
   const [winningRefs, setWinningRefs] = useState<SymbolRef[] | null>(null);
 
+  const refsMatrix = useRef<SymbolRef[][]>([
+    [useRef(null), useRef(null), useRef(null)],
+    [useRef(null), useRef(null), useRef(null)],
+    [useRef(null), useRef(null), useRef(null)]
+  ]);
+
   useEffect(() => {
     const savedBonus = localStorage.getItem('bonusSymbol');
     if (!savedBonus) router.push('/ChooseBonusSymbol');
@@ -42,8 +48,6 @@ export default function AiSlot() {
       }, 500);
     }
   }, [turn]);
-
-  const symbolRefs = useRef<SymbolRef[][]>([[], [], []]);
 
   const spin = () => {
     if (isSpinning || turn >= 10 || !bonusSymbol) return;
@@ -84,7 +88,6 @@ export default function AiSlot() {
       [result[0][col], result[1][col], result[2][col]]
     );
 
-    const refsMatrix = symbolRefs.current;
     const symbolsToCheck = symbols.filter(s => s !== 'wild');
 
     symbolsToCheck.forEach(sym => {
@@ -96,7 +99,8 @@ export default function AiSlot() {
         const matchRow = colSymbols.findIndex(s => s === sym || s === 'wild');
         if (matchRow >= 0) {
           matches++;
-          selected.push(refsMatrix[col][matchRow]);
+          const ref = refsMatrix.current[col][matchRow];
+          if (ref) selected.push({ symbol: sym, ref, col, row: matchRow });
         }
       }
 
@@ -115,10 +119,9 @@ export default function AiSlot() {
 
   const getLineCoordinates = (): { x: number, y: number }[] | null => {
     if (!winningRefs) return null;
-    const coords = winningRefs.map(ref => {
-      const el = ref.ref.current;
-      if (!el) return null;
-      const rect = el.getBoundingClientRect();
+    const coords = winningRefs.map(s => {
+      if (!s || !s.ref.current) return null;
+      const rect = s.ref.current.getBoundingClientRect();
       return {
         x: rect.left + rect.width / 2,
         y: rect.top + rect.height / 2
@@ -219,13 +222,10 @@ export default function AiSlot() {
               >
                 {reel.map((symbol, j) => {
                   const isBonus = symbol === bonusSymbol;
-                  const ref = useRef<HTMLDivElement>(null);
-                  if (!symbolRefs.current[i]) symbolRefs.current[i] = [];
-                  symbolRefs.current[i][j] = { symbol, ref, col: i, row: j };
                   return (
                     <div
                       key={j}
-                      ref={ref}
+                      ref={refsMatrix.current[i][j]}
                       style={{
                         ...styles.symbolBox,
                         borderRadius: isBonus ? '14px' : '0',
