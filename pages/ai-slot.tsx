@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import '@fontsource/orbitron';
@@ -9,19 +9,17 @@ const symbols = [
   'melone', 'prugna', 'sette', 'stella', 'trisette', 'uva', 'wild'
 ];
 
-const getRandomSymbol = () => {
-  const index = Math.floor(Math.random() * symbols.length);
-  return symbols[index];
-};
+const getRandomSymbol = () => symbols[Math.floor(Math.random() * symbols.length)];
 
 export default function AiSlot() {
   const router = useRouter();
   const [bonusSymbol, setBonusSymbol] = useState<string | null>(null);
-  const [resultSymbols, setResultSymbols] = useState<string[][]>([[], [], []]);
+  const [spinningSymbols, setSpinningSymbols] = useState<string[][]>([[], [], []]);
+  const [finalSymbols, setFinalSymbols] = useState<string[][]>([[], [], []]);
   const [isSpinning, setIsSpinning] = useState(false);
   const [turn, setTurn] = useState(0);
   const [score, setScore] = useState(0);
-  const [bonusCount, setBonusCount] = useState(0);
+  const [bonusHits, setBonusHits] = useState(0);
 
   useEffect(() => {
     const savedBonus = localStorage.getItem('bonusSymbol');
@@ -35,48 +33,49 @@ export default function AiSlot() {
   useEffect(() => {
     if (turn >= 10) {
       localStorage.removeItem('bonusSymbol');
-      setTimeout(() => {
-        alert(`Hai totalizzato ${score} punti e trovato ${bonusCount} simboli bonus!`);
-        router.push('/dashboard');
-      }, 1000);
+      setTimeout(() => router.push({
+        pathname: '/dashboard',
+        query: { score: score.toString(), hits: bonusHits.toString() }
+      }), 2000);
     }
   }, [turn]);
 
   const spin = () => {
     if (isSpinning || turn >= 10 || !bonusSymbol) return;
     setIsSpinning(true);
-    const newResultSymbols: string[][] = [[], [], []];
-    const intervals: NodeJS.Timeout[] = [];
 
-    for (let reelIndex = 0; reelIndex < 3; reelIndex++) {
-      let count = 0;
-      const interval = setInterval(() => {
-        count++;
-        newResultSymbols[reelIndex] = Array.from({ length: 5 }, getRandomSymbol);
-        setResultSymbols([...newResultSymbols]);
-        if (count > 20 + reelIndex * 10) {
-          clearInterval(interval);
-          if (reelIndex === 2) {
-            setTimeout(() => {
-              const centerSymbols = newResultSymbols.map(reel => reel[2]);
-              let roundPoints = 0;
-              let roundBonus = 0;
-              centerSymbols.forEach(sym => {
-                if (sym === bonusSymbol) {
-                  roundPoints += 10;
-                  roundBonus++;
-                }
-              });
-              setScore(prev => prev + roundPoints);
-              setBonusCount(prev => prev + roundBonus);
-              setTurn(prev => prev + 1);
-              setIsSpinning(false);
-            }, 200);
-          }
+    // 1. Genera i risultati definitivi
+    const results = Array.from({ length: 3 }, () => Array.from({ length: 5 }, getRandomSymbol));
+    setFinalSymbols(results);
+
+    let count = 0;
+    const interval = setInterval(() => {
+      count++;
+      setSpinningSymbols(Array.from({ length: 3 }, () => Array.from({ length: 5 }, getRandomSymbol)));
+    }, 50);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      setSpinningSymbols(results);
+      calculateScore(results);
+      setTurn(prev => prev + 1);
+      setIsSpinning(false);
+    }, 1800);
+  };
+
+  const calculateScore = (symbolsToCount: string[][]) => {
+    let points = 0;
+    let hits = 0;
+    symbolsToCount.forEach(reel => {
+      reel.forEach(symbol => {
+        if (symbol === bonusSymbol) {
+          points += 10;
+          hits++;
         }
-      }, 60);
-      intervals.push(interval);
-    }
+      });
+    });
+    setScore(prev => prev + points);
+    setBonusHits(prev => prev + hits);
   };
 
   const styles = {
@@ -127,14 +126,13 @@ export default function AiSlot() {
       flexDirection: 'column' as const,
       transition: 'transform 0.2s ease-out',
     },
-    symbolBox: (highlight: boolean) => ({
+    symbolBox: {
       width: '100%',
       height: '100px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      animation: highlight ? 'flash 0.4s ease-in-out infinite alternate' : 'none'
-    }),
+    },
     spinButton: {
       marginTop: '2rem',
       padding: '0.75rem 1.5rem',
@@ -159,11 +157,11 @@ export default function AiSlot() {
       <h1 style={styles.title}>LoveOnPi AI Slot</h1>
       {bonusSymbol && <div style={styles.bonus}>🎯 Bonus selezionato: {bonusSymbol.toUpperCase()}</div>}
       <div style={styles.slotContainer}>
-        {resultSymbols.map((reel, i) => (
+        {spinningSymbols.map((reel, i) => (
           <div key={i} style={styles.reel}>
             <div style={styles.reelInner}>
               {reel.map((symbol, j) => (
-                <div key={j} style={styles.symbolBox(j === 2 && symbol === bonusSymbol)}>
+                <div key={j} style={styles.symbolBox}>
                   <Image
                     src={`/slot-symbols/${symbol}.png`}
                     alt={symbol}
@@ -181,12 +179,6 @@ export default function AiSlot() {
       <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
         🎰 Gira
       </button>
-      <style jsx>{`
-        @keyframes flash {
-          from { filter: brightness(1); }
-          to { filter: brightness(2); }
-        }
-      `}</style>
     </div>
   );
 }
