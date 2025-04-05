@@ -14,7 +14,7 @@ const symbols = [
 
 const getRandomSymbol = () => symbols[Math.floor(Math.random() * symbols.length)];
 
-type SymbolRef = { symbol: string, ref: React.RefObject<HTMLDivElement>, col: number, row: number };
+type SymbolRef = { symbol: string, ref: React.RefObject<HTMLDivElement | null>, col: number, row: number };
 
 export default function AiSlot() {
   const router = useRouter();
