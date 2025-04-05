@@ -74,8 +74,27 @@ export default function AiSlot() {
         if (symbol === bonusSymbol) count++;
       });
     });
+
+    let bonusLinePoints = 0;
+    const lines = [
+      // Orizzontali
+      [result[0][0], result[1][0], result[2][0]],
+      [result[0][1], result[1][1], result[2][1]],
+      [result[0][2], result[1][2], result[2][2]],
+      // Diagonali
+      [result[0][0], result[1][1], result[2][2]],
+      [result[0][2], result[1][1], result[2][0]]
+    ];
+
+    lines.forEach(line => {
+      if (line.every(symbol => symbol === line[0])) {
+        const isBonusLine = line[0] === bonusSymbol;
+        bonusLinePoints += isBonusLine ? 150 : 15;
+      }
+    });
+
     setBonusCount(prev => prev + count);
-    setScore(prev => prev + count * 10);
+    setScore(prev => prev + count * 10 + bonusLinePoints);
   };
 
   const styles = {
