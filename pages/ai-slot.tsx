@@ -1,7 +1,7 @@
-// File: ai-slot.tsx con simboli vincenti illuminati e rimozione linea SVG
+// File: ai-slot.tsx aggiornato con logica corretta vincite sparse + glow bonus
 
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import '@fontsource/orbitron';
@@ -12,10 +12,7 @@ const symbols = [
   'melone', 'prugna', 'sette', 'stella', 'trisette', 'uva', 'wild'
 ];
 
-const getRandomSymbol = () => {
-  const index = Math.floor(Math.random() * symbols.length);
-  return symbols[index];
-};
+const getRandomSymbol = () => symbols[Math.floor(Math.random() * symbols.length)];
 
 export default function AiSlot() {
   const router = useRouter();
@@ -26,15 +23,11 @@ export default function AiSlot() {
   const [turn, setTurn] = useState(0);
   const [score, setScore] = useState(0);
   const [bonusCount, setBonusCount] = useState(0);
-  const [highlighted, setHighlighted] = useState<{ col: number; row: number }[]>([]);
 
   useEffect(() => {
     const savedBonus = localStorage.getItem('bonusSymbol');
-    if (!savedBonus) {
-      router.push('/ChooseBonusSymbol');
-    } else {
-      setBonusSymbol(savedBonus);
-    }
+    if (!savedBonus) router.push('/ChooseBonusSymbol');
+    else setBonusSymbol(savedBonus);
   }, []);
 
   useEffect(() => {
@@ -50,7 +43,6 @@ export default function AiSlot() {
   const spin = () => {
     if (isSpinning || turn >= 10 || !bonusSymbol) return;
     setIsSpinning(true);
-    setHighlighted([]);
 
     const result: string[][] = Array.from({ length: 3 }, () =>
       Array.from({ length: 3 }, getRandomSymbol)
@@ -79,79 +71,35 @@ export default function AiSlot() {
       });
     });
 
-    let highlights: { col: number; row: number }[] = [];
-    let linePoints = 0;
-    const lines = [
-      [ [0,0], [1,0], [2,0] ],
-      [ [0,1], [1,1], [2,1] ],
-      [ [0,2], [1,2], [2,2] ],
-      [ [0,0], [1,1], [2,2] ],
-      [ [0,2], [1,1], [2,0] ]
-    ];
-
-    lines.forEach(line => {
-      const values = line.map(([c, r]) => result[c][r]);
-      if (values.every(v => v === values[0])) {
-        const isBonus = values[0] === bonusSymbol;
-        linePoints += isBonus ? 150 : 15;
-        highlights.push(...line.map(([col, row]) => ({ col, row })));
-      }
-    });
-
-    let anyMatchPoints = 0;
-    const columns = [0, 1, 2].map(col =>
-      [result[0][col], result[1][col], result[2][col]]
-    );
-
+    let totalPoints = 0;
+    const columns = [0, 1, 2].map(col => [result[0][col], result[1][col], result[2][col]]);
     const symbolsToCheck = symbols.filter(s => s !== 'wild');
+
     symbolsToCheck.forEach(sym => {
-      let matches = 0;
+      let counts = [0, 0, 0];
       for (let col = 0; col < 3; col++) {
-        const hasSymbol = columns[col].includes(sym);
-        const hasWild = columns[col].includes('wild');
-        if (hasSymbol) {
-          matches++;
-        } else if (hasWild) {
-          matches++;
-        }
+        if (columns[col].includes(sym)) counts[col] = 1;
+        else if (columns[col].includes('wild')) counts[col] = 2;
       }
 
-      if (matches >= 3) {
-        const counts = [0, 0, 0];
-        for (let col = 0; col < 3; col++) {
-          if (columns[col].includes(sym)) {
-            counts[col] = 1;
-          } else if (columns[col].includes('wild')) {
-            counts[col] = 2;
-          }
-        }
+      const numSym = counts.filter(c => c === 1).length;
+      const numWild = counts.filter(c => c === 2).length;
 
-        const numSym = counts.filter(c => c === 1).length;
-        const numWild = counts.filter(c => c === 2).length;
-
+      if (numSym + numWild >= 3) {
         if (sym === bonusSymbol) {
-          if (numSym === 3) {
-            anyMatchPoints += 150;
-          } else if (numSym === 2 && numWild === 1) {
-            anyMatchPoints += 70;
-          } else if (numSym === 1 && numWild === 2) {
-            anyMatchPoints += 50;
-          }
+          if (numSym === 3) totalPoints += 150;
+          else if (numSym === 2 && numWild === 1) totalPoints += 70;
+          else if (numSym === 1 && numWild === 2) totalPoints += 50;
         } else {
-          if (numSym === 3) {
-            anyMatchPoints += 15;
-          } else if (numSym === 2 && numWild === 1) {
-            anyMatchPoints += 10;
-          } else if (numSym === 1 && numWild === 2) {
-            anyMatchPoints += 5;
-          }
+          if (numSym === 3) totalPoints += 15;
+          else if (numSym === 2 && numWild === 1) totalPoints += 10;
+          else if (numSym === 1 && numWild === 2) totalPoints += 5;
         }
       }
     });
 
     setBonusCount(prev => prev + count);
-    setScore(prev => prev + count * 10 + linePoints + anyMatchPoints);
-    setHighlighted(highlights);
+    setScore(prev => prev + count * 10 + totalPoints);
   };
 
   const styles = {
@@ -186,8 +134,7 @@ export default function AiSlot() {
       borderRadius: '30px',
       background: 'linear-gradient(145deg, #4b0082, #2c003e)',
       boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
-      border: '6px solid #8a2be2',
-      position: 'relative' as 'relative'
+      border: '6px solid #8a2be2'
     },
     reel: {
       width: '120px',
@@ -244,15 +191,14 @@ export default function AiSlot() {
             >
               {reel.map((symbol, j) => {
                 const isBonus = symbol === bonusSymbol;
-                const isWinner = highlighted.some(pos => pos.col === i && pos.row === j);
                 return (
                   <div
                     key={j}
                     style={{
                       ...styles.symbolBox,
                       borderRadius: isBonus ? '14px' : '0',
-                      animation: isWinner ? 'pulseGlow 1s infinite' : isBonus ? 'pulseGlow 1s infinite' : 'none',
-                      boxShadow: isWinner ? '0 0 18px 6px #ff0000, 0 0 32px 12px #ff000066' : isBonus
+                      animation: isBonus ? 'pulseGlow 1s infinite' : 'none',
+                      boxShadow: isBonus
                         ? '0 0 15px 6px #00ffcc, 0 0 25px 12px #00ffcc66'
                         : 'none'
                     }}
@@ -272,9 +218,7 @@ export default function AiSlot() {
         ))}
       </div>
       <div style={styles.score}>Giri rimasti: {10 - turn} | Punti: {score}</div>
-      <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>
-        🎰 Gira
-      </button>
+      <button style={styles.spinButton} onClick={spin} disabled={isSpinning}>🎰 Gira</button>
 
       <style>{`
         @keyframes pulseGlow {
@@ -282,7 +226,6 @@ export default function AiSlot() {
           50% { transform: scale(1.25); }
           100% { transform: scale(1); }
         }
-
         @keyframes reelStop {
           from { transform: translateY(20px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
