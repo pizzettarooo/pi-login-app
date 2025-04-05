@@ -123,8 +123,7 @@ export default function AiSlot() {
     },
     reelInner: {
       display: 'flex',
-      flexDirection: 'column' as const,
-      transition: 'transform 0.2s ease-out'
+      flexDirection: 'column' as const
     },
     symbolBox: {
       width: '100%',
@@ -159,7 +158,13 @@ export default function AiSlot() {
       <div style={styles.slotContainer}>
         {reelSymbols.map((reel, i) => (
           <div key={i} style={styles.reel}>
-            <div style={styles.reelInner}>
+            <div
+              style={{
+                ...styles.reelInner,
+                animation: !isSpinning ? 'reelStop 0.3s ease-out forwards' : 'none',
+                animationDelay: !isSpinning ? `${i * 0.3}s` : '0s'
+              }}
+            >
               {reel.map((symbol, j) => {
                 const isBonus = symbol === bonusSymbol;
                 return (
@@ -198,6 +203,11 @@ export default function AiSlot() {
           0% { transform: scale(1); }
           50% { transform: scale(1.25); }
           100% { transform: scale(1); }
+        }
+
+        @keyframes reelStop {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
     </div>
