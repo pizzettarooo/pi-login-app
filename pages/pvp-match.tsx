@@ -27,6 +27,7 @@ export default function PvpMatch() {
   const [matchId, setMatchId] = useState<string | null>(null);
   const [match, setMatch] = useState<any>(null);
   const [wallet, setWallet] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [reelSymbols, setReelSymbols] = useState<string[][]>([[], [], []]);
@@ -37,6 +38,13 @@ export default function PvpMatch() {
     if (!idFromUrl || !localWallet) router.push('/dashboard');
     setMatchId(idFromUrl);
     setWallet(localWallet);
+
+    // recupera user id da wallet
+    fetch(`/api/getUserId?wallet=${localWallet}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.userId) setUserId(data.userId);
+      });
   }, []);
 
   useEffect(() => {
@@ -44,15 +52,15 @@ export default function PvpMatch() {
     const interval = setInterval(fetchMatch, 2000);
     fetchMatch();
     return () => clearInterval(interval);
-  }, [matchId]);
+  }, [matchId, userId]);
 
   const fetchMatch = async () => {
     const res = await fetch(`/api/pvp-get?id=${matchId}`);
     const data = await res.json();
     setMatch(data.match);
     setIsMyTurn(
-      (data.match.player1 === wallet && data.match.current_turn % 2 === 0) ||
-      (data.match.player2 === wallet && data.match.current_turn % 2 === 1)
+      (data.match.player1 === userId && data.match.current_turn % 2 === 0) ||
+      (data.match.player2 === userId && data.match.current_turn % 2 === 1)
     );
   };
 
@@ -65,24 +73,22 @@ export default function PvpMatch() {
     );
     setReelSymbols(result);
 
-    const score = calculateScore(result, match.player1 === wallet ? match.bonus1 : match.bonus2);
+    const score = calculateScore(result, match.player1 === userId ? match.bonus1 : match.bonus2);
     const newSymbols = [...(match.symbols || []), result];
-    const newScore = match.player1 === wallet
+    const newScore = match.player1 === userId
       ? (match.score1 || 0) + score
       : (match.score2 || 0) + score;
 
-      await fetch('/api/pvp-update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          matchId,
-          wallet,
-          scoreToAdd: score,
-          newSymbols: result
-        })
-      });
-      
-
+    await fetch('/api/pvp-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        matchId,
+        wallet,
+        scoreToAdd: score,
+        newSymbols
+      })
+    });
 
     fetchMatch();
     setSpinning(false);
@@ -129,8 +135,8 @@ export default function PvpMatch() {
   }
 
   const isFinished = match.current_turn >= 20;
-  const myScore = match.player1 === wallet ? match.score1 : match.score2;
-  const opponentScore = match.player1 === wallet ? match.score2 : match.score1;
+  const myScore = match.player1 === userId ? match.score1 : match.score2;
+  const opponentScore = match.player1 === userId ? match.score2 : match.score1;
 
   return (
     <div style={styles.page}>
