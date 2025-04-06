@@ -1,12 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const symbols = [
   'arancia', 'banana', 'bar', 'ciliegia', 'dollaro',
@@ -18,54 +12,36 @@ export default function PvpLobby() {
   const router = useRouter();
   const [bonus, setBonus] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [wallet, setWallet] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedWallet = localStorage.getItem("wallet");
+    if (!storedWallet) router.push("/login");
+    else setWallet(storedWallet);
+  }, []);
 
   const handleJoin = async () => {
-    if (!bonus) return;
+    if (!bonus || !wallet) return;
     setJoining(true);
 
-    // Controlla se c'è una partita in attesa
-    const { data: waitingMatch } = await supabase
-      .from('matches')
-      .select('*')
-      .eq('status', 'waiting')
-      .limit(1)
-      .maybeSingle();
+    const res = await fetch('/api/pvp-join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallet, bonus }),
+    });
 
-    if (waitingMatch) {
-      // Entra nella partita come player2
-      await supabase
-        .from('matches')
-        .update({
-          player2: (await supabase.auth.getUser()).data.user?.id,
-          bonus2: bonus,
-          status: 'playing'
-        })
-        .eq('id', waitingMatch.id);
-
-      router.push(`/pvp-match?id=${waitingMatch.id}`);
+    const data = await res.json();
+    if (res.ok) {
+      router.push(`/pvp-match?id=${data.matchId}`);
     } else {
-      // Crea nuova partita come player1
-      const { data, error } = await supabase
-        .from('matches')
-        .insert([
-          {
-            player1: (await supabase.auth.getUser()).data.user?.id,
-            bonus1: bonus,
-            status: 'waiting'
-          }
-        ])
-        .select()
-        .single();
-
-      router.push(`/pvp-match?id=${data.id}`);
+      alert(data.error || 'Errore nel join PvP');
+      setJoining(false);
     }
   };
 
   return (
     <div style={{ textAlign: 'center', padding: '2rem', color: 'white' }}>
-      <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-        Scegli il tuo simbolo bonus
-      </h1>
+      <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Scegli il tuo simbolo bonus</h1>
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem' }}>
         {symbols.map((sym) => (
           <button
