@@ -1,4 +1,3 @@
-// /pages/api/pvp-get.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
@@ -8,23 +7,28 @@ const supabase = createClient(
 );
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { matchId } = req.query;
+  const matchId = req.query.id as string;
 
-  if (!matchId || typeof matchId !== 'string') {
-    return res.status(400).json({ error: 'ID partita mancante' });
+  if (!matchId) {
+    return res.status(400).json({ error: 'ID mancante' });
   }
 
   try {
-    const { data, error } = await supabase
+    const { data: match, error } = await supabase
       .from('matches')
       .select('*')
       .eq('id', matchId)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return res.status(200).json(data);
+
+    if (!match) {
+      return res.status(404).json({ error: 'Partita non trovata' });
+    }
+
+    return res.status(200).json({ match });
   } catch (err) {
-    console.error('Errore in /pvp-get:', err);
-    return res.status(500).json({ error: 'Errore server' });
+    console.error('Errore API /pvp-get:', err);
+    return res.status(500).json({ error: 'Errore interno del server' });
   }
 }
