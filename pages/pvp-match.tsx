@@ -66,15 +66,13 @@ export default function PvpMatch() {
     );
     setReelSymbols(result);
 
-    // Calcolo punteggio
     const score = calculateScore(result, match.player1 === wallet ? match.bonus1 : match.bonus2);
     const newSymbols = [...(match.symbols || []), result];
     const newScore = match.player1 === wallet
       ? (match.score1 || 0) + score
       : (match.score2 || 0) + score;
 
-    // Chiamata API per salvare
-    const res = await fetch('/api/pvp-update', {
+    await fetch('/api/pvp-update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -86,7 +84,7 @@ export default function PvpMatch() {
       })
     });
 
-    if (res.ok) fetchMatch();
+    fetchMatch();
     setSpinning(false);
   };
 
@@ -110,7 +108,33 @@ export default function PvpMatch() {
     return count * 10 + linePoints;
   };
 
-  if (!match) return <div style={{ color: 'white', textAlign: 'center', paddingTop: '5rem' }}>Caricamento partita...</div>;
+  if (!match) {
+    return <div style={styles.page}><p style={styles.loading}>Caricamento partita...</p></div>;
+  }
+
+  if (match.status === 'waiting') {
+    return (
+      <div style={styles.page}>
+        <div className="loader" />
+        <p style={styles.loading}>In attesa di un avversario...</p>
+        <style>{`
+          .loader {
+            border: 8px solid #333;
+            border-top: 8px solid #00FFFF;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1.5rem;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   const isFinished = match.current_turn >= 20;
   const myScore = match.player1 === wallet ? match.score1 : match.score2;
@@ -119,7 +143,6 @@ export default function PvpMatch() {
   return (
     <div style={styles.page}>
       <h1 style={styles.title}>Match PvP</h1>
-
       <p style={styles.score}>Tu: {myScore} | Avversario: {opponentScore}</p>
       <p style={{ marginBottom: '1rem' }}>Turno {match.current_turn + 1} / 20</p>
 
@@ -148,7 +171,6 @@ export default function PvpMatch() {
               </div>
             ))}
           </div>
-
           <button
             onClick={spin}
             disabled={!isMyTurn || spinning}
@@ -223,5 +245,10 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '12px',
     cursor: 'pointer',
     boxShadow: '0 4px 0 #c33d00'
+  },
+  loading: {
+    fontSize: '1.2rem',
+    color: '#00ffff',
+    fontWeight: 'bold'
   }
 };
