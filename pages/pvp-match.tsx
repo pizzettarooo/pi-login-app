@@ -58,7 +58,6 @@ export default function PvpMatch() {
 
   const spin = async () => {
     if (!match || spinning || !isMyTurn) return;
-
     setSpinning(true);
 
     const result: string[][] = Array.from({ length: 3 }, () =>
@@ -109,29 +108,21 @@ export default function PvpMatch() {
   };
 
   if (!match) {
-    return <div style={styles.page}><p style={styles.loading}>Caricamento partita...</p></div>;
+    return (
+      <div style={styles.page}>
+        <div className="dot-spinner" />
+        <p style={styles.loading}>Caricamento partita...</p>
+        <style>{dotSpinnerCSS}</style>
+      </div>
+    );
   }
 
   if (match.status === 'waiting') {
     return (
       <div style={styles.page}>
-        <div className="loader" />
+        <div className="dot-spinner" />
         <p style={styles.loading}>In attesa di un avversario...</p>
-        <style>{`
-          .loader {
-            border: 8px solid #333;
-            border-top: 8px solid #00FFFF;
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1.5rem;
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
+        <style>{dotSpinnerCSS}</style>
       </div>
     );
   }
@@ -171,11 +162,7 @@ export default function PvpMatch() {
               </div>
             ))}
           </div>
-          <button
-            onClick={spin}
-            disabled={!isMyTurn || spinning}
-            style={styles.spinButton}
-          >
+          <button onClick={spin} disabled={!isMyTurn || spinning} style={styles.spinButton}>
             🎰 Gira
           </button>
         </>
@@ -247,8 +234,48 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: '0 4px 0 #c33d00'
   },
   loading: {
-    fontSize: '1.2rem',
-    color: '#00ffff',
-    fontWeight: 'bold'
+    fontSize: '1.4rem',
+    color: '#00FFFF',
+    fontFamily: 'Orbitron'
   }
 };
+
+const dotSpinnerCSS = `
+  .dot-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .dot-spinner::before,
+  .dot-spinner::after,
+  .dot-spinner {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00FFFF;
+    animation: dot-pulse 0.8s infinite ease-in-out;
+  }
+
+  .dot-spinner::before {
+    animation-delay: -0.2s;
+  }
+
+  .dot-spinner::after {
+    animation-delay: 0.2s;
+  }
+
+  @keyframes dot-pulse {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+  }
+`;
