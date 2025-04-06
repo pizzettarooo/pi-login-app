@@ -115,10 +115,7 @@ export default function Dashboard() {
     <div style={containerStyle}>
       <div style={cardStyle}>
         <h1 style={titleStyle}>
-          <span role="img" aria-label="slot">
-            🎰
-          </span>{" "}
-          Dashboard Utente
+          <span role="img" aria-label="slot">🎰</span> Dashboard Utente
         </h1>
 
         <div style={walletContainer}>
@@ -126,7 +123,9 @@ export default function Dashboard() {
           <span style={walletValue}>{wallet}</span>
         </div>
 
-        <div style={creditStyle}>Crediti disponibili: <strong>{credits}</strong></div>
+        <div style={creditStyle}>
+          Crediti disponibili: <strong>{credits}</strong>
+        </div>
 
         <button style={buttonStyle} onClick={() => router.push("/ricarica")}>
           Ricarica
@@ -134,6 +133,10 @@ export default function Dashboard() {
 
         <button style={buttonStyle} onClick={() => router.push("/ai-slot")}>
           Modalità AI Test Slot
+        </button>
+
+        <button style={buttonStyle} onClick={() => router.push("/pvp-lobby")}>
+          Slot PvP Lobby
         </button>
 
         <button style={logoutButtonStyle} onClick={handleLogout}>
