@@ -71,17 +71,18 @@ export default function PvpMatch() {
       ? (match.score1 || 0) + score
       : (match.score2 || 0) + score;
 
-    await fetch('/api/pvp-update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: matchId,
-        symbols: newSymbols,
-        current_turn: match.current_turn + 1,
-        score1: match.player1 === wallet ? newScore : match.score1,
-        score2: match.player2 === wallet ? newScore : match.score2
-      })
-    });
+      await fetch('/api/pvp-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matchId,
+          wallet,
+          scoreToAdd: score,
+          newSymbols: result
+        })
+      });
+      
+
 
     fetchMatch();
     setSpinning(false);
