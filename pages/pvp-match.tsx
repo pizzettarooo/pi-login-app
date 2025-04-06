@@ -49,7 +49,6 @@ export default function PvpMatch() {
   const fetchMatch = async () => {
     const res = await fetch(`/api/pvp-get?id=${matchId}`);
     const data = await res.json();
-    if (!data.match) return;
     setMatch(data.match);
     setIsMyTurn(
       (data.match.player1 === wallet && data.match.current_turn % 2 === 0) ||
@@ -72,7 +71,7 @@ export default function PvpMatch() {
       ? (match.score1 || 0) + score
       : (match.score2 || 0) + score;
 
-    const res = await fetch('/api/pvp-update', {
+    await fetch('/api/pvp-update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -84,7 +83,7 @@ export default function PvpMatch() {
       })
     });
 
-    if (res.ok) fetchMatch();
+    fetchMatch();
     setSpinning(false);
   };
 
@@ -110,26 +109,20 @@ export default function PvpMatch() {
 
   if (!match) {
     return (
-      <div style={{ 
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', background: 'linear-gradient(to bottom right, #002B36, #001F2B)',
-        color: '#00ffff', fontSize: '1.5rem', fontFamily: 'Orbitron'
-      }}>
-        <div className="spinner" />
-        <p style={{ marginTop: '1rem' }}>In attesa di un avversario...</p>
-        <style jsx>{`
-          .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(0,255,255,0.3);
-            border-top-color: #00ffff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          }
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
+      <div style={styles.page}>
+        <div className="dot-spinner" />
+        <p style={styles.loading}>Caricamento partita...</p>
+        <style>{dotSpinnerCSS}</style>
+      </div>
+    );
+  }
+
+  if (match.status === 'waiting') {
+    return (
+      <div style={styles.page}>
+        <div className="dot-spinner" />
+        <p style={styles.loading}>In attesa di un avversario...</p>
+        <style>{dotSpinnerCSS}</style>
       </div>
     );
   }
@@ -169,12 +162,7 @@ export default function PvpMatch() {
               </div>
             ))}
           </div>
-
-          <button
-            onClick={spin}
-            disabled={!isMyTurn || spinning}
-            style={styles.spinButton}
-          >
+          <button onClick={spin} disabled={!isMyTurn || spinning} style={styles.spinButton}>
             🎰 Gira
           </button>
         </>
@@ -185,33 +173,109 @@ export default function PvpMatch() {
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
-    minHeight: '100vh', background: 'linear-gradient(to bottom right, #002B36, #001F2B)',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    padding: '2rem', color: 'white'
+    minHeight: '100vh',
+    background: 'linear-gradient(to bottom right, #002B36, #001F2B)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '2rem',
+    color: 'white'
   },
   title: {
-    fontSize: '2.5rem', marginBottom: '1rem', fontFamily: 'Orbitron', color: '#00FFFF'
+    fontSize: '2.5rem',
+    marginBottom: '1rem',
+    fontFamily: 'Orbitron',
+    color: '#00FFFF'
   },
   score: {
-    fontSize: '1.2rem', marginBottom: '0.5rem'
+    fontSize: '1.2rem',
+    marginBottom: '0.5rem'
   },
   slotContainer: {
-    display: 'flex', gap: '12px', padding: '1.5rem', borderRadius: '30px',
-    background: 'linear-gradient(145deg, #4b0082, #2c003e)', boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
-    border: '6px solid #8a2be2', marginBottom: '1.5rem'
+    display: 'flex',
+    gap: '12px',
+    padding: '1.5rem',
+    borderRadius: '30px',
+    background: 'linear-gradient(145deg, #4b0082, #2c003e)',
+    boxShadow: 'inset 0 0 10px #000000aa, 0 10px 20px #00000080',
+    border: '6px solid #8a2be2',
+    marginBottom: '1.5rem'
   },
   reel: {
-    width: '120px', height: '300px', overflow: 'hidden', borderRadius: '16px',
-    backgroundColor: '#121212', border: '2px solid #ffffff55', boxShadow: 'inset 0 0 5px #00000099'
+    width: '120px',
+    height: '300px',
+    overflow: 'hidden',
+    borderRadius: '16px',
+    backgroundColor: '#121212',
+    border: '2px solid #ffffff55',
+    boxShadow: 'inset 0 0 5px #00000099'
   },
   reelInner: {
-    display: 'flex', flexDirection: 'column'
+    display: 'flex',
+    flexDirection: 'column'
   },
   symbolBox: {
-    width: '100%', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+    width: '100%',
+    height: '100px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   spinButton: {
-    padding: '1rem 2rem', fontSize: '1.2rem', fontWeight: 'bold', backgroundColor: '#FF4500',
-    color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 4px 0 #c33d00'
+    padding: '1rem 2rem',
+    fontSize: '1.2rem',
+    fontWeight: 'bold',
+    backgroundColor: '#FF4500',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 0 #c33d00'
+  },
+  loading: {
+    fontSize: '1.4rem',
+    color: '#00FFFF',
+    fontFamily: 'Orbitron'
   }
 };
+
+const dotSpinnerCSS = `
+  .dot-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .dot-spinner::before,
+  .dot-spinner::after,
+  .dot-spinner {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00FFFF;
+    animation: dot-pulse 0.8s infinite ease-in-out;
+  }
+
+  .dot-spinner::before {
+    animation-delay: -0.2s;
+  }
+
+  .dot-spinner::after {
+    animation-delay: 0.2s;
+  }
+
+  @keyframes dot-pulse {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+  }
+`;
