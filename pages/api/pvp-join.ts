@@ -1,5 +1,4 @@
-// File: /pages/api/pvp-join.ts
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -8,61 +7,66 @@ const supabase = createClient(
 );
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Metodo non consentito' });
-  }
+  if (req.method !== 'POST') return res.status(405).end();
 
-  const { wallet, bonus } = req.body;
+  const { wallet, bonusSymbol } = req.body;
 
-  if (!wallet || !bonus) {
-    return res.status(400).json({ error: 'Dati mancanti: wallet o bonus' });
+  if (!wallet || !bonusSymbol) {
+    return res.status(400).json({ error: 'Dati mancanti' });
   }
 
   try {
-    // Cerca una partita in attesa
-    const { data: waitingMatch, error: searchError } = await supabase
+    // 🔎 Trova utente per ID (basato su wallet)
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('wallet', wallet)
+      .maybeSingle();
+
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+
+    // 🎮 Cerca partita in attesa
+    const { data: waitingMatch } = await supabase
       .from('matches')
       .select('*')
       .eq('status', 'waiting')
       .limit(1)
       .maybeSingle();
 
-    if (searchError) throw searchError;
-
     if (waitingMatch) {
-      // Unisciti come player2
-      const { data: updated, error: updateError } = await supabase
+      // ✅ Entra nella partita come player2
+      const { error: updateError } = await supabase
         .from('matches')
         .update({
-          player2: wallet,
-          bonus2: bonus,
-          status: 'playing'
+          player2: user.id,
+          bonus2: bonusSymbol,
+          status: 'playing',
         })
-        .eq('id', waitingMatch.id)
-        .select()
-        .single();
+        .eq('id', waitingMatch.id);
 
       if (updateError) throw updateError;
-      return res.status(200).json({ matchId: updated.id });
+
+      return res.status(200).json({ matchId: waitingMatch.id });
     } else {
-      // Crea nuova partita
+      // 🆕 Crea nuova partita come player1
       const { data: created, error: insertError } = await supabase
         .from('matches')
         .insert([
           {
-            player1: wallet,
-            bonus1: bonus,
-            status: 'waiting'
-          }
+            player1: user.id,
+            bonus1: bonusSymbol,
+            status: 'waiting',
+          },
         ])
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError || !created) throw insertError;
+
       return res.status(200).json({ matchId: created.id });
     }
-  } catch (err: any) {
-    console.error('Errore API PvP join:', err);
-    return res.status(500).json({ error: 'Errore interno' });
+  } catch (err) {
+    console.error('Errore API /pvp-join:', err);
+    return res.status(500).json({ error: 'Errore interno del server' });
   }
 }
